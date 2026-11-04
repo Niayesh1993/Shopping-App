@@ -57,6 +57,18 @@ class ProductSearchApiTest {
     }
 
     @Test
+    fun `sends no parameters beyond the query and the page`() = runTest {
+        server.enqueue(jsonResponse(readTestResource(SAMPLE_RESPONSE)))
+
+        api.searchProducts(query = "apple", page = 1)
+
+        val url = server.takeRequest().requestUrl!!
+        assertEquals(setOf("query", "page"), url.queryParameterNames)
+        assertEquals("apple", url.queryParameter("query"))
+        assertEquals("1", url.queryParameter("page"))
+    }
+
+    @Test
     fun `deserialises the assignment payload into domain products`() = runTest {
         server.enqueue(jsonResponse(readTestResource(SAMPLE_RESPONSE)))
 
@@ -74,7 +86,7 @@ class ProductSearchApiTest {
         assertEquals(9.2, iPhoneX.rating!!.average, DELTA)
         assertEquals(209, iPhoneX.rating!!.count)
         assertEquals(3, iPhoneX.usps.size)
-        assertEquals(Availability.IN_STOCK, iPhoneX.availability)
+        assertEquals(Availability(2), iPhoneX.availability)
         assertTrue(iPhoneX.hasNextDayDelivery)
         assertNull(iPhoneX.promotion)
     }
@@ -109,7 +121,7 @@ class ProductSearchApiTest {
         assertEquals("Apple gebruikers", choice.promotion!!.text)
 
         val limited = products.single { it.id == 648326L }
-        assertEquals(Availability.LIMITED_STOCK, limited.availability)
+        assertEquals(Availability(3), limited.availability)
     }
 
     @Test

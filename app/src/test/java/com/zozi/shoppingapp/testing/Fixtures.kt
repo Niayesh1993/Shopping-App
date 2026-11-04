@@ -15,7 +15,7 @@ fun product(
     usps: List<String> = listOf("256 GB opslagcapaciteit"),
     price: Price = Price(salesIncVat = 1279.0),
     rating: Rating? = Rating(average = 9.2, count = 209),
-    availability: Availability = Availability.IN_STOCK,
+    availability: Availability = Availability(2),
     hasNextDayDelivery: Boolean = true,
     promotion: Promotion? = null,
 ): Product = Product(

@@ -32,7 +32,7 @@ fun ProductDto.toDomain(): Product? {
         usps = usps.filter { it.isNotBlank() }.map { it.normaliseWhitespace() },
         price = Price(salesIncVat = salesPrice, listIncVat = listPriceIncVat),
         rating = reviewInformation.toDomain(),
-        availability = availabilityState.toAvailability(),
+        availability = Availability(availabilityState),
         hasNextDayDelivery = nextDayDelivery,
         promotion = promoIcon.toDomain(),
     )
@@ -53,15 +53,6 @@ private fun String?.toPromotionType(): PromotionType = when (this) {
     "coolblues-choice" -> PromotionType.COOLBLUES_CHOICE
     "action-price" -> PromotionType.ACTION_PRICE
     else -> PromotionType.OTHER
-}
-
-// The assignment payload exposes availability only as an opaque integer; 2 and 3 are the
-// values present in the sample, the rest are mapped defensively.
-private fun Int?.toAvailability(): Availability = when (this) {
-    1 -> Availability.OUT_OF_STOCK
-    2 -> Availability.IN_STOCK
-    3 -> Availability.LIMITED_STOCK
-    else -> Availability.UNKNOWN
 }
 
 private fun String.normaliseWhitespace(): String = replace(WHITESPACE_RUN, " ").trim()

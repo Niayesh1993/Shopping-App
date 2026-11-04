@@ -28,7 +28,7 @@ class ProductMapperTest {
         assertEquals(1279.0, product.price.salesIncVat, DELTA)
         assertEquals(9.2, product.rating!!.average, DELTA)
         assertEquals(209, product.rating!!.count)
-        assertEquals(Availability.IN_STOCK, product.availability)
+        assertEquals(Availability(2), product.availability)
         assertTrue(product.hasNextDayDelivery)
     }
 
@@ -49,15 +49,22 @@ class ProductMapperTest {
     }
 
     @Test
-    fun `maps known availability states and defaults the rest to unknown`() {
+    fun `carries the availability state through without interpreting it`() {
         fun availabilityFor(state: Int?) =
             completeDto().copy(availabilityState = state).toDomain()!!.availability
 
-        assertEquals(Availability.OUT_OF_STOCK, availabilityFor(1))
-        assertEquals(Availability.IN_STOCK, availabilityFor(2))
-        assertEquals(Availability.LIMITED_STOCK, availabilityFor(3))
-        assertEquals(Availability.UNKNOWN, availabilityFor(99))
+        // The API assigns no meaning to these codes, so the mapper must not invent one.
+        assertEquals(Availability(1), availabilityFor(1))
+        assertEquals(Availability(2), availabilityFor(2))
+        assertEquals(Availability(3), availabilityFor(3))
+        assertEquals(Availability(99), availabilityFor(99))
         assertEquals(Availability.UNKNOWN, availabilityFor(null))
+    }
+
+    @Test
+    fun `treats a missing availability state as unknown`() {
+        assertFalse(completeDto().copy(availabilityState = null).toDomain()!!.availability.isKnown)
+        assertTrue(completeDto().copy(availabilityState = 2).toDomain()!!.availability.isKnown)
     }
 
     @Test

@@ -99,12 +99,43 @@ class SearchScreenTest {
     }
 
     @Test
-    fun showsRetryableErrorWithItsMessage() {
+    fun emptyStateNamesTheQueryThatFoundNothing() {
+        setScreen(SearchUiState(query = "zzzzz"))
+
+        composeRule
+            .onNodeWithText(context.getString(R.string.search_empty_subtitle, "zzzzz"))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun emptyStateCanClearTheSearch() {
+        var cleared: String? = null
+        setScreen(SearchUiState(query = "zzzzz"), onQueryChange = { cleared = it })
+
+        composeRule.onNodeWithTag(SearchTestTags.SECONDARY_ACTION).performClick()
+
+        assertEquals("", cleared)
+    }
+
+    @Test
+    fun showsRetryableErrorWithTitleAndExplanation() {
         setScreen(SearchUiState(query = "apple", error = AppError.NoConnection))
 
         composeRule.onNodeWithTag(SearchTestTags.ERROR).assertIsDisplayed()
+        composeRule
+            .onNodeWithText(context.getString(R.string.error_no_connection_title))
+            .assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.error_no_connection)).assertIsDisplayed()
         composeRule.onNodeWithTag(SearchTestTags.ERROR_RETRY).assertIsDisplayed()
+    }
+
+    @Test
+    fun showsTheServerErrorCodeInTheExplanation() {
+        setScreen(SearchUiState(query = "apple", error = AppError.Server(503)))
+
+        composeRule
+            .onNodeWithText(context.getString(R.string.error_server, 503))
+            .assertIsDisplayed()
     }
 
     @Test
@@ -142,6 +173,27 @@ class SearchScreenTest {
 
         composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).assertIsDisplayed()
         composeRule.onNodeWithTag(SearchTestTags.ERROR).assertDoesNotExist()
+        composeRule.onNodeWithTag(SearchTestTags.NEXT_PAGE_ERROR).assertIsDisplayed()
+        composeRule.onNodeWithText(context.getString(R.string.error_next_page)).assertIsDisplayed()
+    }
+
+    @Test
+    fun nextPageErrorOffersAnInlineRetry() {
+        var retries = 0
+        setScreen(
+            SearchUiState(
+                query = "apple",
+                products = listOf(product(id = 1)),
+                totalResults = 70,
+                hasNextPage = true,
+                nextPageError = AppError.Timeout,
+            ),
+            onLoadNextPage = { retries++ },
+        )
+
+        composeRule.onNodeWithTag(SearchTestTags.NEXT_PAGE_RETRY).performClick()
+
+        assertEquals(1, retries)
     }
 
     @Test

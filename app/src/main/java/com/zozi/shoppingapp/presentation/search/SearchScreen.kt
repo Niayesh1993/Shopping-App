@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -37,8 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zozi.shoppingapp.R
+import com.zozi.shoppingapp.domain.error.AppError
 import com.zozi.shoppingapp.domain.model.Product
 import com.zozi.shoppingapp.presentation.search.components.MessageState
+import com.zozi.shoppingapp.presentation.search.components.NextPageError
 import com.zozi.shoppingapp.presentation.search.components.ProductCard
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
@@ -110,20 +113,30 @@ fun SearchScreen(
                     )
 
                     uiState.isIdle -> MessageState(
+                        icon = Icons.Filled.Search,
                         title = stringResource(R.string.search_idle_title),
                         subtitle = stringResource(R.string.search_idle_subtitle),
                         modifier = Modifier.testTag(SearchTestTags.IDLE),
                     )
 
                     uiState.isEmptyResult -> MessageState(
+                        icon = Icons.Filled.SearchOff,
                         title = stringResource(R.string.search_empty_title),
-                        subtitle = stringResource(R.string.search_empty_subtitle),
+                        subtitle = stringResource(
+                            R.string.search_empty_subtitle,
+                            uiState.query,
+                        ),
+                        iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        iconBackground = MaterialTheme.colorScheme.surfaceVariant,
+                        secondaryActionLabel = stringResource(R.string.search_empty_action),
+                        onSecondaryAction = { onQueryChange("") },
                         modifier = Modifier.testTag(SearchTestTags.EMPTY),
                     )
 
                     else -> ProductList(
                         products = uiState.products,
                         isLoadingNextPage = uiState.isLoadingNextPage,
+                        nextPageError = uiState.nextPageError,
                         onLoadNextPage = onLoadNextPage,
                     )
                 }
@@ -139,7 +152,11 @@ private fun ErrorState(
 ) {
     val error = uiState.error ?: return
     MessageState(
-        title = error.asMessage(),
+        icon = error.icon,
+        title = error.asTitle(),
+        subtitle = error.asMessage(),
+        iconTint = MaterialTheme.colorScheme.error,
+        iconBackground = MaterialTheme.colorScheme.errorContainer,
         actionLabel = stringResource(R.string.action_retry).takeIf { error.isRetryable },
         onAction = onRetry.takeIf { error.isRetryable },
         modifier = Modifier.testTag(SearchTestTags.ERROR),
@@ -182,11 +199,16 @@ private fun SearchField(
 private fun ProductList(
     products: List<Product>,
     isLoadingNextPage: Boolean,
+    nextPageError: AppError?,
     onLoadNextPage: () -> Unit,
 ) {
     val listState = rememberLazyListState()
 
-    LaunchedEffect(listState, products.size) {
+    // Scrolling stops pulling pages once one has failed, so the user decides when to retry
+    // instead of the list hammering a broken endpoint.
+    LaunchedEffect(listState, products.size, nextPageError) {
+        if (nextPageError != null) return@LaunchedEffect
+
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .filterNotNull()
             .distinctUntilChanged()
@@ -224,6 +246,17 @@ private fun ProductList(
                         modifier = Modifier.testTag(SearchTestTags.LOADING_NEXT_PAGE),
                     )
                 }
+            }
+        }
+
+        if (nextPageError != null) {
+            item {
+                NextPageError(
+                    message = stringResource(R.string.error_next_page),
+                    actionLabel = stringResource(R.string.action_retry),
+                    onRetry = onLoadNextPage,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
             }
         }
     }

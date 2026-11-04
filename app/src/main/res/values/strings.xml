@@ -6,9 +6,11 @@
     <string name="search_clear">Clear search</string>
 
     <string name="search_idle_title">Find something you like</string>
-    <string name="search_idle_subtitle">Start typing to search the catalogue.</string>
+    <string name="search_idle_subtitle">Search the catalogue by name, brand or feature to see what is available.</string>
+
     <string name="search_empty_title">No products found</string>
-    <string name="search_empty_subtitle">Try a different search term.</string>
+    <string name="search_empty_subtitle">Nothing matched “%s”. Check the spelling or try a shorter, more general term.</string>
+    <string name="search_empty_action">Clear search</string>
 
     <plurals name="search_result_count">
         <item quantity="one">%d product</item>
@@ -17,22 +19,29 @@
 
     <string name="action_retry">Try again</string>
 
-    <string name="error_no_connection">No internet connection. Check your network and try again.</string>
-    <string name="error_timeout">The request took too long. Please try again.</string>
+    <string name="error_no_connection_title">You are offline</string>
+    <string name="error_no_connection">Check your internet connection, then try the search again.</string>
+    <string name="error_timeout_title">This is taking too long</string>
+    <string name="error_timeout">The catalogue did not respond in time. Give it another try.</string>
+    <string name="error_unauthorized_title">Access denied</string>
     <string name="error_unauthorized">This app is not authorised to reach the catalogue.</string>
+    <string name="error_not_found_title">Nothing to show</string>
     <string name="error_not_found">We could not find what you were looking for.</string>
-    <string name="error_server">The catalogue is temporarily unavailable (%d).</string>
-    <string name="error_client">Something went wrong with that request (%d).</string>
-    <string name="error_serialization">We received an unexpected response from the catalogue.</string>
-    <string name="error_empty_query">Enter a search term to begin.</string>
-    <string name="error_unknown">Something went wrong. Please try again.</string>
+    <string name="error_server_title">The catalogue is unavailable</string>
+    <string name="error_server">Something is wrong on our side (%d). Please try again shortly.</string>
+    <string name="error_client_title">That request failed</string>
+    <string name="error_client">We could not complete that request (%d).</string>
+    <string name="error_serialization_title">Unexpected response</string>
+    <string name="error_serialization">The catalogue sent something this app could not read.</string>
+    <string name="error_empty_query_title">Enter a search term</string>
+    <string name="error_empty_query">Type a product name to start searching.</string>
+    <string name="error_unknown_title">Something went wrong</string>
+    <string name="error_unknown">An unexpected problem occurred. Please try again.</string>
+
+    <string name="error_next_page">Could not load more products.</string>
 
     <string name="product_image_description">Picture of %s</string>
     <string name="product_rating">%1$s out of 10, based on %2$d reviews</string>
     <string name="product_next_day_delivery">Delivered tomorrow</string>
     <string name="product_discount">-%d%%</string>
-
-    <string name="availability_in_stock">In stock</string>
-    <string name="availability_limited_stock">Limited stock</string>
-    <string name="availability_out_of_stock">Out of stock</string>
 </resources>

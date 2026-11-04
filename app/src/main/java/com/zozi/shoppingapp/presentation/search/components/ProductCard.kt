@@ -30,7 +30,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.zozi.shoppingapp.R
-import com.zozi.shoppingapp.domain.model.Availability
 import com.zozi.shoppingapp.domain.model.Product
 
 @Composable
@@ -97,8 +96,7 @@ fun ProductCard(
 
                 PriceRow(product = product, modifier = Modifier.padding(top = 8.dp))
 
-                AvailabilityRow(
-                    availability = product.availability,
+                DeliveryRow(
                     hasNextDayDelivery = product.hasNextDayDelivery,
                     modifier = Modifier.padding(top = 4.dp),
                 )
@@ -174,50 +172,33 @@ private fun PriceRow(
     }
 }
 
+/**
+ * Only `nextDayDelivery` is rendered: the API's `availabilityState` codes have no defined
+ * meaning, so claiming "in stock" or "out of stock" from them would be made up.
+ */
 @Composable
-private fun AvailabilityRow(
-    availability: Availability,
+private fun DeliveryRow(
     hasNextDayDelivery: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val availabilityLabel = when (availability) {
-        Availability.IN_STOCK -> stringResource(R.string.availability_in_stock)
-        Availability.LIMITED_STOCK -> stringResource(R.string.availability_limited_stock)
-        Availability.OUT_OF_STOCK -> stringResource(R.string.availability_out_of_stock)
-        Availability.UNKNOWN -> null
-    }
+    if (!hasNextDayDelivery) return
 
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        if (availabilityLabel != null) {
-            Text(
-                text = availabilityLabel,
-                style = MaterialTheme.typography.labelSmall,
-                color = when (availability) {
-                    Availability.OUT_OF_STOCK -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant
-                },
-            )
-        }
-        if (hasNextDayDelivery) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Filled.LocalShipping,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(14.dp),
-                )
-                Text(
-                    text = stringResource(R.string.product_next_day_delivery),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 3.dp),
-                )
-            }
-        }
+        Icon(
+            imageVector = Icons.Filled.LocalShipping,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = stringResource(R.string.product_next_day_delivery),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 4.dp),
+        )
     }
 }
 

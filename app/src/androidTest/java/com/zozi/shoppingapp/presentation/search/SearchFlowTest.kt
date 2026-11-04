@@ -164,6 +164,56 @@ class SearchFlowTest {
     }
 
     @Test
+    fun aFailedNextPageKeepsTheResultsAndRecoversOnRetry() {
+        val firstPage = productPage(
+            products = (1..20L).map { product(id = it, name = "Product $it") },
+            currentPage = 1,
+            pageCount = 2,
+            totalResults = 40,
+        )
+        repository.respondToPage(1, Outcome.Success(firstPage))
+        repository.respondToPage(2, Outcome.Failure(AppError.Timeout))
+
+        typeQuery("product")
+        awaitProductList()
+
+        // Only a handful of cards fit on screen, so the next page is requested on reaching the end.
+        composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).performScrollToIndex(19)
+        composeRule.waitUntil(TIMEOUT_MILLIS) { repository.requests.any { it.page == 2 } }
+        composeRule.waitForIdle()
+
+        // The failure footer is appended below the last card, so it starts just out of view.
+        composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).performScrollToIndex(FOOTER_INDEX)
+        composeRule.waitUntil(TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithTag(SearchTestTags.NEXT_PAGE_RETRY)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        // The first page stays on screen rather than being replaced by an error screen.
+        composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).assertIsDisplayed()
+        composeRule.onNodeWithTag(SearchTestTags.ERROR).assertDoesNotExist()
+
+        repository.respondToPage(
+            2,
+            Outcome.Success(
+                productPage(
+                    products = (21..40L).map { product(id = it, name = "Product $it") },
+                    currentPage = 2,
+                    pageCount = 2,
+                    totalResults = 40,
+                ),
+            ),
+        )
+        composeRule.onNodeWithTag(SearchTestTags.NEXT_PAGE_RETRY).performClick()
+
+        composeRule.waitUntil(TIMEOUT_MILLIS) {
+            repository.requests.count { it.page == 2 } == 2
+        }
+        composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).performScrollToIndex(39)
+        composeRule.onNodeWithText("Product 40").assertIsDisplayed()
+        composeRule.onNodeWithTag(SearchTestTags.NEXT_PAGE_ERROR).assertDoesNotExist()
+    }
+
+    @Test
     fun clearingTheQueryReturnsToTheIdlePrompt() {
         repository.respondWith(productPage(products = listOf(product(id = 1))))
 
@@ -181,5 +231,8 @@ class SearchFlowTest {
 
     private companion object {
         const val TIMEOUT_MILLIS = 5_000L
+
+        /** The footer sits straight after the 20 cards of the first page. */
+        const val FOOTER_INDEX = 20
     }
 }
