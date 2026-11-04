@@ -1,0 +1,40 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+/.idea/deploymentTargetSelector.xml
+/.idea/deploymentTargetDropDown.xml
+/.idea/shelf
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Build outputs
+build/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Signing / secrets
+*.jks
+*.keystore
+keystore.properties
+secrets.properties
+
+# Logs & temp
+*.log
+*.hprof
+.kotlin/
+
+# Claude Code local settings
+.claude/settings.local.json
