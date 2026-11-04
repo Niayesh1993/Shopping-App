@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -29,13 +29,14 @@ class SearchViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
-    private val queryInput = MutableStateFlow("")
+    /** Null until the user types, so the initial value is skipped by content rather than position. */
+    private val queryInput = MutableStateFlow<String?>(null)
     private var searchJob: Job? = null
     private var nextPageJob: Job? = null
 
     @OptIn(FlowPreview::class)
     private val debouncedQueries = queryInput
-        .drop(1)
+        .filterNotNull()
         .debounce(QUERY_DEBOUNCE_MILLIS)
         .distinctUntilChanged()
 
