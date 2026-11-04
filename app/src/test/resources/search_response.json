@@ -1,0 +1,119 @@
+{
+  "products": [
+    {
+      "productId": 793652,
+      "productName": "Apple iPhone X 256GB Zilver",
+      "reviewInformation": {
+        "reviews": [],
+        "reviewSummary": {
+          "reviewAverage": 9.2,
+          "reviewCount": 209
+        }
+      },
+      "USPs": [
+        "256 GB opslagcapaciteit",
+        "5,8 inch Retina HD scherm",
+        "iOS 11"
+      ],
+      "availabilityState": 2,
+      "salesPriceIncVat": 1279,
+      "productImage": "https://image.coolblue.nl/300x750/products/984921",
+      "nextDayDelivery": true
+    },
+    {
+      "productId": 232406,
+      "productName": "Apple iPod / iPhone USB Power Adapter",
+      "reviewInformation": {
+        "reviews": [],
+        "reviewSummary": {
+          "reviewAverage": 9,
+          "reviewCount": 36
+        }
+      },
+      "USPs": [
+        "USB A aansluiting",
+        "1,0 A",
+        "1 USB poort"
+      ],
+      "availabilityState": 2,
+      "salesPriceIncVat": 24.99,
+      "productImage": "https://image.coolblue.nl/300x750/products/679663",
+      "nextDayDelivery": true
+    },
+    {
+      "productId": 340051,
+      "productName": "Apple AirPort Time Capsule 2 TB",
+      "reviewInformation": {
+        "reviews": [],
+        "reviewSummary": {
+          "reviewAverage": 9.3,
+          "reviewCount": 215
+        }
+      },
+      "USPs": [
+        "Gebruiksklaar",
+        "512MB RAM + Dual core CPU",
+        "Back-ups"
+      ],
+      "availabilityState": 2,
+      "salesPriceIncVat": 279,
+      "productImage": "https://image.coolblue.nl/300x750/products/234562",
+      "coolbluesChoiceInformationTitle": "Apple gebruikers ",
+      "promoIcon": {
+        "text": "Apple gebruikers ",
+        "type": "coolblues-choice"
+      },
+      "nextDayDelivery": true
+    },
+    {
+      "productId": 733904,
+      "productName": "Apple iPhone 7 32GB Zilver",
+      "reviewInformation": {
+        "reviews": [],
+        "reviewSummary": {
+          "reviewAverage": 9.3,
+          "reviewCount": 1235
+        }
+      },
+      "USPs": [
+        "32 GB opslagcapaciteit",
+        "4,7 inch Retina HD scherm",
+        "iOS 11"
+      ],
+      "availabilityState": 2,
+      "salesPriceIncVat": 575,
+      "listPriceIncVat": 626,
+      "listPriceExVat": 517.35537,
+      "productImage": "https://image.coolblue.nl/300x750/products/985084",
+      "promoIcon": {
+        "text": "aanbieding",
+        "type": "action-price"
+      },
+      "nextDayDelivery": true
+    },
+    {
+      "productId": 648326,
+      "productName": "Apple iPhone 6s 128GB Space Gray",
+      "reviewInformation": {
+        "reviews": [],
+        "reviewSummary": {
+          "reviewAverage": 9.2,
+          "reviewCount": 1273
+        }
+      },
+      "USPs": [
+        "128 GB opslagcapaciteit",
+        "4,7 inch Retina HD scherm",
+        "iOS 11"
+      ],
+      "availabilityState": 3,
+      "salesPriceIncVat": 639,
+      "productImage": "https://image.coolblue.nl/300x750/products/1014061",
+      "nextDayDelivery": true
+    }
+  ],
+  "currentPage": 3,
+  "pageSize": 24,
+  "totalResults": 70,
+  "pageCount": 3
+}
