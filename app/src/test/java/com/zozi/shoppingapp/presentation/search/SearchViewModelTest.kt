@@ -175,6 +175,27 @@ class SearchViewModelTest {
     }
 
     @Test
+    fun `a whitespace only query stays idle instead of showing an error`() = runViewModelTest {
+        viewModel.onQueryChange("   ")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.isIdle)
+        assertNull(state.error)
+        assertTrue(repository.requests.isEmpty())
+    }
+
+    @Test
+    fun `trims the query before searching`() = runViewModelTest {
+        repository.respondWith(productPage(products = listOf(product(id = 1))))
+
+        viewModel.onQueryChange("  apple  ")
+        advanceUntilIdle()
+
+        assertEquals("apple", repository.requests.single().query)
+    }
+
+    @Test
     fun `appends the next page to the existing products`() = runViewModelTest {
         repository.respondToPage(
             1,

@@ -27,6 +27,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.zozi.shoppingapp.R
@@ -203,3 +205,64 @@ private fun DeliveryRow(
 }
 
 private const val MAX_VISIBLE_USPS = 3
+
+@PreviewLightDark
+@Composable
+private fun ProductCardPreview() {
+    PreviewContainer {
+        ProductCard(product = previewProduct, modifier = Modifier.padding(16.dp))
+    }
+}
+
+@Preview(name = "Discount and promotion")
+@Composable
+private fun ProductCardDiscountedPreview() {
+    PreviewContainer {
+        ProductCard(product = previewDiscountedProduct, modifier = Modifier.padding(16.dp))
+    }
+}
+
+@Preview(name = "No rating, USPs or delivery")
+@Composable
+private fun ProductCardMinimalPreview() {
+    PreviewContainer {
+        ProductCard(product = previewMinimalProduct, modifier = Modifier.padding(16.dp))
+    }
+}
+
+@Preview(name = "More USPs than fit", showBackground = true)
+@Composable
+private fun ProductCardTruncatedUspsPreview() {
+    PreviewContainer {
+        ProductCard(
+            product = previewProduct.copy(
+                usps = previewProduct.usps + listOf("Face ID", "Draadloos opladen"),
+            ),
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RatingRowPreview() {
+    PreviewContainer {
+        RatingRow(average = 9.2, count = 209, modifier = Modifier.padding(8.dp))
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PriceRowPreview() {
+    PreviewContainer {
+        PriceRow(product = previewDiscountedProduct, modifier = Modifier.padding(8.dp))
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DeliveryRowPreview() {
+    PreviewContainer {
+        DeliveryRow(hasNextDayDelivery = true, modifier = Modifier.padding(8.dp))
+    }
+}

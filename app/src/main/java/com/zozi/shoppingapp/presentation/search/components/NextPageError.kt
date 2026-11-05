@@ -19,13 +19,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import com.zozi.shoppingapp.R
 import com.zozi.shoppingapp.presentation.search.SearchTestTags
 
-/**
- * Footer shown when loading a further page failed. The products already on screen stay put, so
- * this stays inline and offers a retry rather than replacing the list with an error screen.
- */
+
 @Composable
 fun NextPageError(
     message: String,
@@ -73,5 +73,18 @@ fun NextPageError(
                 )
             }
         }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun NextPageErrorPreview() {
+    PreviewContainer {
+        NextPageError(
+            message = stringResource(R.string.error_next_page),
+            actionLabel = stringResource(R.string.action_retry),
+            onRetry = {},
+            modifier = Modifier.padding(16.dp),
+        )
     }
 }

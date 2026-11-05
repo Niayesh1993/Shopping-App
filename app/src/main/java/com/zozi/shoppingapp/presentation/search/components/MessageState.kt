@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,14 +25,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import com.zozi.shoppingapp.R
 import com.zozi.shoppingapp.presentation.search.SearchTestTags
 
-/**
- * Shared full-screen state: an illustrative icon, a short headline, an explanatory line and up to
- * two actions. Used for the idle prompt, the empty result and the full-screen error.
- */
+
 @Composable
 fun MessageState(
     icon: ImageVector,
@@ -112,5 +116,64 @@ fun MessageState(
                 Text(text = secondaryActionLabel)
             }
         }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun MessageStateIdlePreview() {
+    PreviewContainer {
+        MessageState(
+            icon = Icons.Filled.Search,
+            title = stringResource(R.string.search_idle_title),
+            subtitle = stringResource(R.string.search_idle_subtitle),
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun MessageStateEmptyPreview() {
+    PreviewContainer {
+        MessageState(
+            icon = Icons.Filled.SearchOff,
+            title = stringResource(R.string.search_empty_title),
+            subtitle = stringResource(R.string.search_empty_subtitle, "zzzzz"),
+            iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+            iconBackground = MaterialTheme.colorScheme.surfaceVariant,
+            secondaryActionLabel = stringResource(R.string.search_empty_action),
+            onSecondaryAction = {},
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun MessageStateErrorPreview() {
+    PreviewContainer {
+        MessageState(
+            icon = Icons.Filled.CloudOff,
+            title = stringResource(R.string.error_no_connection_title),
+            subtitle = stringResource(R.string.error_no_connection),
+            iconTint = MaterialTheme.colorScheme.error,
+            iconBackground = MaterialTheme.colorScheme.errorContainer,
+            actionLabel = stringResource(R.string.action_retry),
+            onAction = {},
+        )
+    }
+}
+
+/** A non-retryable error: same layout, no action button. */
+@Preview(name = "Error without retry")
+@Composable
+private fun MessageStateErrorWithoutRetryPreview() {
+    PreviewContainer {
+        MessageState(
+            icon = Icons.Filled.CloudOff,
+            title = stringResource(R.string.error_no_connection_title),
+            subtitle = stringResource(R.string.error_no_connection),
+            iconTint = MaterialTheme.colorScheme.error,
+            iconBackground = MaterialTheme.colorScheme.errorContainer,
+        )
     }
 }

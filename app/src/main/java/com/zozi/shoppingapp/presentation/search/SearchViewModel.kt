@@ -2,6 +2,7 @@ package com.zozi.shoppingapp.presentation.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zozi.shoppingapp.domain.error.AppError
 import com.zozi.shoppingapp.domain.model.Product
 import com.zozi.shoppingapp.domain.model.ProductPage
 import com.zozi.shoppingapp.domain.result.fold
@@ -91,11 +92,6 @@ class SearchViewModel @Inject constructor(
         searchJob?.cancel()
         nextPageJob?.cancel()
 
-        if (query.isBlank()) {
-            _uiState.value = SearchUiState(query = query)
-            return
-        }
-
         searchJob = viewModelScope.launch {
             _uiState.update {
                 it.copy(isLoading = true, error = null, nextPageError = null)
@@ -114,6 +110,13 @@ class SearchViewModel @Inject constructor(
                     }
                 },
                 onFailure = { error ->
+                    // The use case decides what counts as an empty query; the ViewModel only decides
+                    // how to show it, and "nothing to search for" is the idle prompt rather than a
+                    // failure the user has to read.
+                    if (error == AppError.EmptyQuery) {
+                        _uiState.value = SearchUiState(query = query)
+                        return@fold
+                    }
                     _uiState.update {
                         it.copy(
                             isLoading = false,
