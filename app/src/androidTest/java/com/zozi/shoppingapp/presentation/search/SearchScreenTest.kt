@@ -20,6 +20,9 @@ import org.junit.Test
 /**
  * Drives the stateless [SearchScreen] directly: every branch of the state machine is reachable
  * by constructing the matching [SearchUiState], with no ViewModel or DI involved.
+ *
+ * Test names read as given/when/then in `camelCase` rather than backticks, because `minSdk` is 24
+ * and dex rejects method names containing spaces below API 30.
  */
 class SearchScreenTest {
 
@@ -47,27 +50,33 @@ class SearchScreenTest {
     }
 
     @Test
-    fun showsIdlePromptBeforeAnySearch() {
+    fun givenNothingSearchedYet_whenTheScreenIsShown_thenTheIdlePromptAppears() {
+        // Given / When
         setScreen(SearchUiState())
 
+        // Then
         composeRule.onNodeWithTag(SearchTestTags.IDLE).assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.search_idle_title)).assertIsDisplayed()
         composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).assertDoesNotExist()
     }
 
     @Test
-    fun showsSpinnerWhileLoading() {
-        // The progress indicator animates forever, so the clock would never go idle on its own.
+    fun givenASearchInFlight_whenTheScreenIsShown_thenOnlyTheSpinnerAppears() {
+        // Given the progress indicator animates forever, so the clock never goes idle on its own
         composeRule.mainClock.autoAdvance = false
+
+        // When
         setScreen(SearchUiState(query = "apple", isLoading = true))
 
+        // Then
         composeRule.onNodeWithTag(SearchTestTags.LOADING).assertIsDisplayed()
         composeRule.onNodeWithTag(SearchTestTags.IDLE).assertDoesNotExist()
         composeRule.onNodeWithTag(SearchTestTags.EMPTY).assertDoesNotExist()
     }
 
     @Test
-    fun showsProductsAndResultCount() {
+    fun givenResults_whenTheScreenIsShown_thenTheProductsAndTheTotalCountAppear() {
+        // Given / When
         setScreen(
             SearchUiState(
                 query = "apple",
@@ -81,6 +90,7 @@ class SearchScreenTest {
             ),
         )
 
+        // Then the count is the total from the API, not the number of cards loaded so far
         composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).assertIsDisplayed()
         composeRule.onAllNodesWithTag(SearchTestTags.PRODUCT_CARD).assertCountEquals(2)
         composeRule.onNodeWithText("Apple iPhone X 256GB Zilver").assertIsDisplayed()
@@ -90,37 +100,46 @@ class SearchScreenTest {
     }
 
     @Test
-    fun showsEmptyStateForAQueryWithNoMatches() {
+    fun givenAQueryWithNoMatches_whenTheScreenIsShown_thenTheEmptyStateAppears() {
+        // Given / When
         setScreen(SearchUiState(query = "zzzzz"))
 
+        // Then
         composeRule.onNodeWithTag(SearchTestTags.EMPTY).assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.search_empty_title)).assertIsDisplayed()
         composeRule.onNodeWithTag(SearchTestTags.IDLE).assertDoesNotExist()
     }
 
     @Test
-    fun emptyStateNamesTheQueryThatFoundNothing() {
+    fun givenAQueryWithNoMatches_whenTheScreenIsShown_thenTheEmptyStateNamesTheQuery() {
+        // Given / When
         setScreen(SearchUiState(query = "zzzzz"))
 
+        // Then
         composeRule
             .onNodeWithText(context.getString(R.string.search_empty_subtitle, "zzzzz"))
             .assertIsDisplayed()
     }
 
     @Test
-    fun emptyStateCanClearTheSearch() {
+    fun givenTheEmptyState_whenItsClearActionIsTapped_thenTheQueryIsCleared() {
+        // Given
         var cleared: String? = null
         setScreen(SearchUiState(query = "zzzzz"), onQueryChange = { cleared = it })
 
+        // When
         composeRule.onNodeWithTag(SearchTestTags.SECONDARY_ACTION).performClick()
 
+        // Then
         assertEquals("", cleared)
     }
 
     @Test
-    fun showsRetryableErrorWithTitleAndExplanation() {
+    fun givenARetryableError_whenTheScreenIsShown_thenTitleExplanationAndRetryAppear() {
+        // Given / When
         setScreen(SearchUiState(query = "apple", error = AppError.NoConnection))
 
+        // Then
         composeRule.onNodeWithTag(SearchTestTags.ERROR).assertIsDisplayed()
         composeRule
             .onNodeWithText(context.getString(R.string.error_no_connection_title))
@@ -130,38 +149,46 @@ class SearchScreenTest {
     }
 
     @Test
-    fun showsTheServerErrorCodeInTheExplanation() {
+    fun givenAServerError_whenTheScreenIsShown_thenTheStatusCodeIsPartOfTheExplanation() {
+        // Given / When
         setScreen(SearchUiState(query = "apple", error = AppError.Server(503)))
 
+        // Then
         composeRule
             .onNodeWithText(context.getString(R.string.error_server, 503))
             .assertIsDisplayed()
     }
 
     @Test
-    fun retryButtonReportsTheRetry() {
+    fun givenAnError_whenRetryIsTapped_thenTheRetryIsReportedOnce() {
+        // Given
         var retries = 0
         setScreen(
             SearchUiState(query = "apple", error = AppError.Timeout),
             onRetry = { retries++ },
         )
 
+        // When
         composeRule.onNodeWithTag(SearchTestTags.ERROR_RETRY).performClick()
 
+        // Then
         assertEquals(1, retries)
     }
 
     @Test
-    fun hidesRetryForAnErrorThatCannotBeRetried() {
+    fun givenAnErrorThatCannotBeRetried_whenTheScreenIsShown_thenNoRetryIsOffered() {
+        // Given / When
         setScreen(SearchUiState(query = "apple", error = AppError.Unauthorized))
 
+        // Then a button that cannot help is worse than no button
         composeRule.onNodeWithTag(SearchTestTags.ERROR).assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.error_unauthorized)).assertIsDisplayed()
         composeRule.onNodeWithTag(SearchTestTags.ERROR_RETRY).assertDoesNotExist()
     }
 
     @Test
-    fun keepsProductsVisibleWhenOnlyTheNextPageFailed() {
+    fun givenOnlyTheNextPageFailed_whenTheScreenIsShown_thenTheResultsStayAndTheErrorIsInline() {
+        // Given / When
         setScreen(
             SearchUiState(
                 query = "apple",
@@ -171,6 +198,7 @@ class SearchScreenTest {
             ),
         )
 
+        // Then
         composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).assertIsDisplayed()
         composeRule.onNodeWithTag(SearchTestTags.ERROR).assertDoesNotExist()
         composeRule.onNodeWithTag(SearchTestTags.NEXT_PAGE_ERROR).assertIsDisplayed()
@@ -178,7 +206,8 @@ class SearchScreenTest {
     }
 
     @Test
-    fun nextPageErrorOffersAnInlineRetry() {
+    fun givenANextPageError_whenItsInlineRetryIsTapped_thenPaginationIsRequestedAgain() {
+        // Given
         var retries = 0
         setScreen(
             SearchUiState(
@@ -191,14 +220,19 @@ class SearchScreenTest {
             onLoadNextPage = { retries++ },
         )
 
+        // When
         composeRule.onNodeWithTag(SearchTestTags.NEXT_PAGE_RETRY).performClick()
 
+        // Then
         assertEquals(1, retries)
     }
 
     @Test
-    fun showsAnInlineSpinnerWhileLoadingTheNextPage() {
+    fun givenTheNextPageIsLoading_whenTheScreenIsShown_thenAnInlineSpinnerJoinsTheResults() {
+        // Given
         composeRule.mainClock.autoAdvance = false
+
+        // When
         setScreen(
             SearchUiState(
                 query = "apple",
@@ -209,34 +243,43 @@ class SearchScreenTest {
             ),
         )
 
+        // Then the existing results are not replaced by a full screen spinner
         composeRule.onNodeWithTag(SearchTestTags.LOADING_NEXT_PAGE).assertIsDisplayed()
         composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).assertIsDisplayed()
     }
 
     @Test
-    fun typingReportsTheQuery() {
+    fun givenTheSearchField_whenTextIsTyped_thenEachChangeIsReported() {
+        // Given
         val typed = mutableListOf<String>()
         setScreen(SearchUiState(), onQueryChange = { typed += it })
 
+        // When
         composeRule.onNodeWithTag(SearchTestTags.SEARCH_FIELD).performTextInput("app")
 
+        // Then
         assertEquals("app", typed.last())
     }
 
     @Test
-    fun clearButtonOnlyAppearsWithAQueryAndClearsIt() {
+    fun givenAQuery_whenTheClearButtonIsTapped_thenTheQueryIsCleared() {
+        // Given
         var cleared: String? = null
         setScreen(SearchUiState(query = "apple"), onQueryChange = { cleared = it })
 
+        // When
         composeRule.onNodeWithTag(SearchTestTags.CLEAR_QUERY).performClick()
 
+        // Then
         assertEquals("", cleared)
     }
 
     @Test
-    fun clearButtonIsHiddenWhileTheQueryIsEmpty() {
+    fun givenAnEmptyQuery_whenTheScreenIsShown_thenThereIsNoClearButton() {
+        // Given / When
         setScreen(SearchUiState())
 
+        // Then
         composeRule.onNodeWithTag(SearchTestTags.CLEAR_QUERY).assertDoesNotExist()
     }
 }

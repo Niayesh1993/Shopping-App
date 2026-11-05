@@ -17,23 +17,33 @@ class SafeApiCallTest {
     private val dispatcher = UnconfinedTestDispatcher()
 
     @Test
-    fun `wraps a successful call`() = runTest {
+    fun `given a call that returns when wrapping it then the value comes back as Success`() = runTest {
+        // Given a block that completes normally
+
+        // When
         val result = safeApiCall(dispatcher) { "payload" }
 
+        // Then
         assertEquals(Outcome.Success("payload"), result)
     }
 
     @Test
-    fun `converts thrown transport failures into domain errors`() = runTest {
+    fun `given a call that throws a transport failure when wrapping it then it becomes a Failure`() = runTest {
+        // Given a block that fails the way the network does
+
+        // When
         val result = safeApiCall<String>(dispatcher) { throw UnknownHostException() }
 
+        // Then
         assertEquals(Outcome.Failure(AppError.NoConnection), result)
     }
 
     @Test
-    fun `lets cancellation propagate instead of reporting it as an error`() = runTest {
+    fun `given a cancelled call when wrapping it then cancellation propagates instead of becoming an error`() = runTest {
+        // Given a block that is cancelled rather than failing
         val started = CompletableDeferred<Unit>()
 
+        // When
         val job = launch {
             safeApiCall<String>(dispatcher) {
                 started.complete(Unit)
@@ -43,6 +53,7 @@ class SafeApiCallTest {
         started.await()
         job.join()
 
+        // Then the coroutine is cancelled, not reported as a failed request
         assertTrue(job.isCancelled)
     }
 }

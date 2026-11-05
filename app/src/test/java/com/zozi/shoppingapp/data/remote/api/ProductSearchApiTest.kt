@@ -43,25 +43,28 @@ class ProductSearchApiTest {
     }
 
     @Test
-    fun `sends the query and page as request parameters`() = runTest {
+    fun `given a query and a page when calling the endpoint then both are sent as request parameters`() = runTest {
+        // Given
         server.enqueue(jsonResponse(readTestResource(SAMPLE_RESPONSE)))
 
+        // When
         api.searchProducts(query = "apple tv", page = 2)
 
+        // Then
         val request = server.takeRequest()
         assertEquals("GET", request.method)
-        assertEquals(
-            "/mobile-assignment/search?query=apple%20tv&page=2",
-            request.path,
-        )
+        assertEquals("/mobile-assignment/search?query=apple%20tv&page=2", request.path)
     }
 
     @Test
-    fun `sends no parameters beyond the query and the page`() = runTest {
+    fun `given a search when calling the endpoint then no parameters beyond query and page are sent`() = runTest {
+        // Given
         server.enqueue(jsonResponse(readTestResource(SAMPLE_RESPONSE)))
 
+        // When
         api.searchProducts(query = "apple", page = 1)
 
+        // Then the endpoint accepts nothing else, so sending more would be guesswork
         val url = server.takeRequest().requestUrl!!
         assertEquals(setOf("query", "page"), url.queryParameterNames)
         assertEquals("apple", url.queryParameter("query"))
@@ -69,11 +72,14 @@ class ProductSearchApiTest {
     }
 
     @Test
-    fun `deserialises the assignment payload into domain products`() = runTest {
+    fun `given the assignment payload when deserialising it then it becomes domain products`() = runTest {
+        // Given
         server.enqueue(jsonResponse(readTestResource(SAMPLE_RESPONSE)))
 
+        // When
         val page = api.searchProducts(query = "apple", page = 3).toDomain()
 
+        // Then
         assertEquals(5, page.products.size)
         assertEquals(3, page.currentPage)
         assertEquals(3, page.pageCount)
@@ -92,24 +98,30 @@ class ProductSearchApiTest {
     }
 
     @Test
-    fun `reads integral review averages and fractional prices`() = runTest {
+    fun `given an integral average and a fractional price when deserialising then both read as doubles`() = runTest {
+        // Given
         server.enqueue(jsonResponse(readTestResource(SAMPLE_RESPONSE)))
 
+        // When
         val adapter = api.searchProducts(query = "apple", page = 1)
             .toDomain()
             .products
             .single { it.id == 232406L }
 
+        // Then the payload writes 9 and 24.99, and neither may be truncated
         assertEquals(9.0, adapter.rating!!.average, DELTA)
         assertEquals(24.99, adapter.price.salesIncVat, DELTA)
     }
 
     @Test
-    fun `reads discounted products and promotion icons`() = runTest {
+    fun `given discounts and promo icons in the payload when deserialising then they reach the products`() = runTest {
+        // Given
         server.enqueue(jsonResponse(readTestResource(SAMPLE_RESPONSE)))
 
+        // When
         val products = api.searchProducts(query = "apple", page = 1).toDomain().products
 
+        // Then
         val discounted = products.single { it.id == 733904L }
         assertTrue(discounted.price.hasDiscount)
         assertEquals(626.0, discounted.price.listIncVat!!, DELTA)
@@ -125,11 +137,14 @@ class ProductSearchApiTest {
     }
 
     @Test
-    fun `tolerates a payload without the products field`() = runTest {
+    fun `given a payload without the products field when deserialising then the page is simply empty`() = runTest {
+        // Given
         server.enqueue(jsonResponse("""{"currentPage":1,"pageCount":0,"totalResults":0}"""))
 
+        // When
         val page = api.searchProducts(query = "nothing", page = 1).toDomain()
 
+        // Then a missing field is not a parse failure
         assertTrue(page.products.isEmpty())
         assertEquals(0, page.totalResults)
     }

@@ -27,7 +27,8 @@ class ProductRepositoryImplTest {
     )
 
     @Test
-    fun `returns mapped products on success`() = runTest {
+    fun `given the api answers when searching then the response is mapped to a domain page`() = runTest {
+        // Given
         coEvery { api.searchProducts(any(), any()) } returns SearchResponseDto(
             products = listOf(
                 ProductDto(
@@ -42,8 +43,10 @@ class ProductRepositoryImplTest {
             pageCount = 3,
         )
 
+        // When
         val outcome = repository.searchProducts("apple", 1)
 
+        // Then
         val page = (outcome as Outcome.Success).data
         assertEquals(1, page.products.size)
         assertEquals("Apple TV 4K 64GB", page.products.first().name)
@@ -52,40 +55,52 @@ class ProductRepositoryImplTest {
     }
 
     @Test
-    fun `forwards the query and page to the api`() = runTest {
+    fun `given a query and a page when searching then both are forwarded to the api unchanged`() = runTest {
+        // Given
         coEvery { api.searchProducts(any(), any()) } returns SearchResponseDto()
 
+        // When
         repository.searchProducts("apple watch", 4)
 
+        // Then
         coVerify(exactly = 1) { api.searchProducts(query = "apple watch", page = 4) }
     }
 
     @Test
-    fun `translates transport failures into domain errors`() = runTest {
+    fun `given the api throws a transport failure when searching then it becomes a domain error`() = runTest {
+        // Given
         coEvery { api.searchProducts(any(), any()) } throws UnknownHostException()
 
+        // When
         val outcome = repository.searchProducts("apple", 1)
 
+        // Then
         assertEquals(Outcome.Failure(AppError.NoConnection), outcome)
     }
 
     @Test
-    fun `translates http failures into domain errors`() = runTest {
+    fun `given the api throws an http failure when searching then it becomes a domain error`() = runTest {
+        // Given
         coEvery { api.searchProducts(any(), any()) } throws HttpException(
             Response.error<Unit>(503, "".toResponseBody("application/json".toMediaType())),
         )
 
+        // When
         val outcome = repository.searchProducts("apple", 1)
 
+        // Then
         assertEquals(Outcome.Failure(AppError.Server(503)), outcome)
     }
 
     @Test
-    fun `does not leak exceptions to the caller`() = runTest {
+    fun `given the api throws anything else when searching then no exception reaches the caller`() = runTest {
+        // Given
         coEvery { api.searchProducts(any(), any()) } throws IllegalStateException("boom")
 
+        // When
         val outcome = repository.searchProducts("apple", 1)
 
+        // Then
         assertEquals(Outcome.Failure(AppError.Unknown("boom")), outcome)
     }
 }
