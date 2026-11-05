@@ -1,7 +1,6 @@
 package com.zozi.shoppingapp.presentation.search.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,7 +23,6 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.zozi.shoppingapp.R
 import com.zozi.shoppingapp.presentation.search.SearchTestTags
-
 
 @Composable
 fun NextPageError(
@@ -52,12 +50,11 @@ fun NextPageError(
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f),
+            )
             TextButton(
                 onClick = onRetry,
                 modifier = Modifier.testTag(SearchTestTags.NEXT_PAGE_RETRY),

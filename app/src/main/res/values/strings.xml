@@ -41,7 +41,10 @@
     <string name="error_next_page">Could not load more products.</string>
 
     <string name="product_image_description">Picture of %s</string>
-    <string name="product_rating">%1$s out of 10, based on %2$d reviews</string>
+    <plurals name="product_rating">
+        <item quantity="one">%1$s out of 10, based on %2$d review</item>
+        <item quantity="other">%1$s out of 10, based on %2$d reviews</item>
+    </plurals>
     <string name="product_next_day_delivery">Delivered tomorrow</string>
     <string name="product_discount">-%d%%</string>
 </resources>

@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextReplacement
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.zozi.shoppingapp.MainActivity
 import com.zozi.shoppingapp.R
@@ -25,17 +26,11 @@ import io.mockk.coVerify
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 import javax.inject.Inject
 
-/**
- * End-to-end through the real ViewModel, use case and DI graph, with only the network-backed
- * repository swapped out for a mock. Covers debounce, pagination and error recovery as the user
- * sees them.
- *
- * Test names read as given/when/then in `camelCase` rather than backticks, because `minSdk` is 24
- * and dex rejects method names containing spaces below API 30.
- */
 @HiltAndroidTest
+@RunWith(AndroidJUnit4::class)
 class SearchFlowTest {
 
     @get:Rule(order = 0)
@@ -55,7 +50,6 @@ class SearchFlowTest {
         hiltRule.inject()
     }
 
-    /** Answers every page. Stubs recorded later win, so a test can re-stub to recover from failure. */
     private fun respondWith(outcome: Outcome<ProductPage>) {
         coEvery { repository.searchProducts(any(), any()) } returns outcome
     }
@@ -79,14 +73,6 @@ class SearchFlowTest {
         }
     }
 
-    /**
-     * Waits for [page] to have been requested at least [times].
-     *
-     * A mock has no request log to poll, so the verification itself is the predicate: it is retried
-     * until it stops throwing. Going through [androidx.compose.ui.test.junit4.ComposeTestRule.waitUntil]
-     * rather than MockK's own `timeout` matters, because the request is triggered by a scroll and
-     * only `waitUntil` keeps driving the Compose clock while we wait.
-     */
     private fun awaitRequestFor(page: Int, times: Int = 1) {
         composeRule.waitUntil(TIMEOUT_MILLIS) {
             runCatching {
@@ -106,7 +92,7 @@ class SearchFlowTest {
 
     @Test
     fun givenTheRepositoryReturnsOnePage_whenAQueryIsTyped_thenTheMatchingProductsAppear() {
-        // Given a single page, so the list does not immediately prefetch a second one
+        // Given
         respondWith(
             productPage(
                 products = listOf(
@@ -148,7 +134,7 @@ class SearchFlowTest {
 
     @Test
     fun givenTheSearchFailed_whenRetryIsTapped_thenTheResultsAppear() {
-        // Given a search that has failed and is showing its error
+        // Given
         respondWith(AppError.NoConnection)
         typeQuery("apple")
         composeRule.waitUntil(TIMEOUT_MILLIS) {
@@ -157,7 +143,7 @@ class SearchFlowTest {
         }
         composeRule.onNodeWithText(context.getString(R.string.error_no_connection)).assertIsDisplayed()
 
-        // When the repository starts answering and the user retries
+        // When
         respondWith(productPage(products = listOf(product(id = 7, name = "Apple Watch"))))
         composeRule.onNodeWithTag(SearchTestTags.ERROR_RETRY).performClick()
         awaitProductList()
@@ -197,20 +183,18 @@ class SearchFlowTest {
         typeQuery("product")
         awaitProductList()
 
-        // When the last card of the first page is reached
+        // When
         composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).performScrollToIndex(19)
 
         // Then
         awaitRequestFor(page = 2)
-
-        // The appended items exist but are off-screen: only visible rows are composed.
         composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).performScrollToIndex(39)
         composeRule.onNodeWithText("Product 40").assertIsDisplayed()
     }
 
     @Test
     fun givenTheNextPageFails_whenTheInlineRetryIsTapped_thenTheResultsSurviveAndTheRestArrive() {
-        // Given a first page that loads and a second page that fails
+        // Given
         val firstPage = productPage(
             products = (1..20L).map { product(id = it, name = "Product $it") },
             currentPage = 1,
@@ -223,22 +207,19 @@ class SearchFlowTest {
         typeQuery("product")
         awaitProductList()
 
-        // Only a handful of cards fit on screen, so the next page is requested on reaching the end.
         composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).performScrollToIndex(19)
         awaitRequestFor(page = 2)
         composeRule.waitForIdle()
 
-        // The failure footer is appended below the last card, so it starts just out of view.
         composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).performScrollToIndex(FOOTER_INDEX)
         composeRule.waitUntil(TIMEOUT_MILLIS) {
             composeRule.onAllNodesWithTag(SearchTestTags.NEXT_PAGE_RETRY)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        // The first page stays on screen rather than being replaced by an error screen.
         composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).assertIsDisplayed()
         composeRule.onNodeWithTag(SearchTestTags.ERROR).assertDoesNotExist()
 
-        // When the repository starts answering and the user retries
+        // When
         respondToPage(
             2,
             Outcome.Success(
@@ -261,7 +242,7 @@ class SearchFlowTest {
 
     @Test
     fun givenResultsOnScreen_whenTheQueryIsCleared_thenTheIdlePromptReturns() {
-        // Given results on screen
+        // Given
         respondWith(productPage(products = listOf(product(id = 1))))
 
         typeQuery("apple")
@@ -281,7 +262,6 @@ class SearchFlowTest {
     private companion object {
         const val TIMEOUT_MILLIS = 5_000L
 
-        /** The footer sits straight after the 20 cards of the first page. */
         const val FOOTER_INDEX = 20
     }
 }

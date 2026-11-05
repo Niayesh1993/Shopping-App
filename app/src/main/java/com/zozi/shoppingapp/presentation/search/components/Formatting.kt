@@ -10,5 +10,3 @@ private val ratingFormat = DecimalFormat("0.0", DecimalFormatSymbols(Locale.US))
 fun Double.formatAsPrice(): String = "€ ${priceFormat.format(this)}"
 
 fun Double.formatAsRating(): String = ratingFormat.format(this)
-
-fun Double?.orZero(): Double = this ?: 0.0

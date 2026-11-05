@@ -67,7 +67,7 @@ class SearchProductsUseCaseTest {
         searchProducts("apple", page = 0)
         searchProducts("apple", page = -7)
 
-        // Then the API is 1-based, so page 0 and below are not valid requests to forward
+        // Then
         coVerify(exactly = 2) { repository.searchProducts(query = any(), page = 1) }
     }
 

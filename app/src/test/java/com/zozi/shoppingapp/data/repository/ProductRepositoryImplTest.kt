@@ -8,6 +8,7 @@ import com.zozi.shoppingapp.domain.result.Outcome
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
@@ -18,6 +19,7 @@ import retrofit2.HttpException
 import retrofit2.Response
 import java.net.UnknownHostException
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ProductRepositoryImplTest {
 
     private val api: ProductSearchApi = mockk()

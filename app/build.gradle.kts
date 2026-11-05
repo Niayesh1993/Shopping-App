@@ -84,7 +84,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.navigation.compose)
 
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
@@ -109,6 +108,8 @@ dependencies {
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    // Compose's test rule drives Espresso underneath. Declaring it keeps androidx.test aligned:
+    // without it, androidx.test.ext:junit pulls a concurrent-futures the platform pin rejects.
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.test.runner)

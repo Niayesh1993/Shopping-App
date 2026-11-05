@@ -60,7 +60,7 @@ com.zozi.shoppingapp
 |---|---|---|
 | Compose BOM | 2026.02.01 | UI toolkit, Material 3 |
 | AndroidX Lifecycle | 2.11.0 | ViewModel, lifecycle-aware state collection |
-| Activity / Navigation Compose | 1.13.0 / 2.10.2 | Entry point and navigation |
+| Activity Compose | 1.13.0 | Entry point |
 | Hilt (+ Navigation Compose) | 2.60.1 / 1.4.0 | Dependency injection |
 | Retrofit (+ serialization converter) | 3.0.0 | HTTP client |
 | OkHttp | 4.12.0 | Transport and logging |
@@ -104,7 +104,7 @@ rejects method names containing spaces below API 30.
 fake would be more code than the behaviour it stands in for. Instrumented tests swap it into the Hilt
 graph with `@TestInstallIn`.
 
-**63 unit tests** in `app/src/test` and **23 instrumented tests** in `app/src/androidTest`.
+**62 unit tests** in `app/src/test` and **24 instrumented tests** in `app/src/androidTest`.
 
 ## Running
 
@@ -120,6 +120,6 @@ answers 403. The whole test suite runs without either value, because no test use
 
 ```bash
 ./gradlew assembleDebug                # build the app
-./gradlew testDebugUnitTest            # 63 unit tests — no device needed
-./gradlew connectedDebugAndroidTest    # 23 instrumented tests — needs a device
+./gradlew testDebugUnitTest            # 62 unit tests — no device needed
+./gradlew connectedDebugAndroidTest    # 24 instrumented tests — needs a device
 ```

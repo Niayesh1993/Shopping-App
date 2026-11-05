@@ -3,6 +3,7 @@ package com.zozi.shoppingapp.data.remote
 import com.zozi.shoppingapp.domain.error.AppError
 import com.zozi.shoppingapp.domain.result.Outcome
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -12,6 +13,7 @@ import org.junit.Test
 import java.net.UnknownHostException
 import kotlin.coroutines.cancellation.CancellationException
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SafeApiCallTest {
 
     private val dispatcher = UnconfinedTestDispatcher()
@@ -40,7 +42,7 @@ class SafeApiCallTest {
 
     @Test
     fun `given a cancelled call when wrapping it then cancellation propagates instead of becoming an error`() = runTest {
-        // Given a block that is cancelled rather than failing
+        // Given
         val started = CompletableDeferred<Unit>()
 
         // When
@@ -53,7 +55,7 @@ class SafeApiCallTest {
         started.await()
         job.join()
 
-        // Then the coroutine is cancelled, not reported as a failed request
+        // Then
         assertTrue(job.isCancelled)
     }
 }

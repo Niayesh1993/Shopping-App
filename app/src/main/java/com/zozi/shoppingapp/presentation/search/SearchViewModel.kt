@@ -110,9 +110,6 @@ class SearchViewModel @Inject constructor(
                     }
                 },
                 onFailure = { error ->
-                    // The use case decides what counts as an empty query; the ViewModel only decides
-                    // how to show it, and "nothing to search for" is the idle prompt rather than a
-                    // failure the user has to read.
                     if (error == AppError.EmptyQuery) {
                         _uiState.value = SearchUiState(query = query)
                         return@fold

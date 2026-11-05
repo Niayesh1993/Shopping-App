@@ -81,13 +81,6 @@ class ProductMapperTest {
     }
 
     @Test
-    fun `given a missing availability code when mapping it then the availability is unknown`() {
-        // Given / When / Then
-        assertFalse(completeDto().copy(availabilityState = null).toDomain()!!.availability.isKnown)
-        assertTrue(completeDto().copy(availabilityState = 2).toDomain()!!.availability.isKnown)
-    }
-
-    @Test
     fun `given a promo icon when mapping it then the type comes from the api vocabulary`() {
         // Given
         fun promotionTypeFor(type: String?) = completeDto()
@@ -166,7 +159,6 @@ class ProductMapperTest {
         val response = SearchResponseDto(
             products = listOf(completeDto(), completeDto().copy(productId = null)),
             currentPage = 3,
-            pageSize = 24,
             totalResults = 70,
             pageCount = 3,
         )

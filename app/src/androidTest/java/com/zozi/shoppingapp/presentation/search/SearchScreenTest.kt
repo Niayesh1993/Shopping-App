@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.zozi.shoppingapp.R
 import com.zozi.shoppingapp.domain.error.AppError
@@ -16,14 +17,9 @@ import com.zozi.shoppingapp.ui.theme.ShoppingAppTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
 
-/**
- * Drives the stateless [SearchScreen] directly: every branch of the state machine is reachable
- * by constructing the matching [SearchUiState], with no ViewModel or DI involved.
- *
- * Test names read as given/when/then in `camelCase` rather than backticks, because `minSdk` is 24
- * and dex rejects method names containing spaces below API 30.
- */
+@RunWith(AndroidJUnit4::class)
 class SearchScreenTest {
 
     @get:Rule
@@ -62,7 +58,7 @@ class SearchScreenTest {
 
     @Test
     fun givenASearchInFlight_whenTheScreenIsShown_thenOnlyTheSpinnerAppears() {
-        // Given the progress indicator animates forever, so the clock never goes idle on its own
+        // Given
         composeRule.mainClock.autoAdvance = false
 
         // When
@@ -90,7 +86,7 @@ class SearchScreenTest {
             ),
         )
 
-        // Then the count is the total from the API, not the number of cards loaded so far
+        // Then
         composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).assertIsDisplayed()
         composeRule.onAllNodesWithTag(SearchTestTags.PRODUCT_CARD).assertCountEquals(2)
         composeRule.onNodeWithText("Apple iPhone X 256GB Zilver").assertIsDisplayed()
@@ -180,7 +176,7 @@ class SearchScreenTest {
         // Given / When
         setScreen(SearchUiState(query = "apple", error = AppError.Unauthorized))
 
-        // Then a button that cannot help is worse than no button
+        // Then
         composeRule.onNodeWithTag(SearchTestTags.ERROR).assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.error_unauthorized)).assertIsDisplayed()
         composeRule.onNodeWithTag(SearchTestTags.ERROR_RETRY).assertDoesNotExist()
@@ -243,7 +239,7 @@ class SearchScreenTest {
             ),
         )
 
-        // Then the existing results are not replaced by a full screen spinner
+        // Then
         composeRule.onNodeWithTag(SearchTestTags.LOADING_NEXT_PAGE).assertIsDisplayed()
         composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).assertIsDisplayed()
     }

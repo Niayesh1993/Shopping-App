@@ -10,13 +10,6 @@ import com.zozi.shoppingapp.domain.model.PromotionType
 import com.zozi.shoppingapp.domain.model.Rating
 import com.zozi.shoppingapp.ui.theme.ShoppingAppTheme
 
-/**
- * Wrapper for every preview in this package.
- *
- * Dynamic colour is switched off on purpose: it is on by default in the real app, but it reads the
- * palette from the device wallpaper, so previews would otherwise render differently per machine and
- * Android version. The [Surface] stands in for the background the real screen gets from `Scaffold`.
- */
 @Composable
 internal fun PreviewContainer(content: @Composable () -> Unit) {
     ShoppingAppTheme(dynamicColor = false) {
@@ -26,12 +19,6 @@ internal fun PreviewContainer(content: @Composable () -> Unit) {
     }
 }
 
-/*
- * Sample products for the previews. `imageUrl` is null throughout: the preview renderer has no
- * network, so a real URL would only ever draw an empty box.
- */
-
-/** Everything populated: rating, several USPs, next-day delivery, no discount. */
 internal val previewProduct = Product(
     id = 793652L,
     name = "Apple iPhone X 256GB Zilver",
@@ -48,7 +35,6 @@ internal val previewProduct = Product(
     promotion = null,
 )
 
-/** Exercises the struck-through list price, the discount badge and the promotion label. */
 internal val previewDiscountedProduct = Product(
     id = 733904L,
     name = "Apple MacBook Air (2017) MQD32N/A",
@@ -61,7 +47,6 @@ internal val previewDiscountedProduct = Product(
     promotion = Promotion(text = "Actieprijs", type = PromotionType.ACTION_PRICE),
 )
 
-/** The sparse end: no rating, no USPs, no promotion, no next-day delivery, and a name that wraps. */
 internal val previewMinimalProduct = Product(
     id = 1L,
     name = "Apple Watch Series 3 42mm Zilver Aluminium met Wit Sportbandje",

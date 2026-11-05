@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -23,7 +24,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -99,6 +99,8 @@ fun SearchScreen(
                 )
             }
 
+            val fullScreenError = uiState.fullScreenError
+
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
                     uiState.isLoading -> CircularProgressIndicator(
@@ -107,8 +109,8 @@ fun SearchScreen(
                             .testTag(SearchTestTags.LOADING),
                     )
 
-                    uiState.showsFullScreenError -> ErrorState(
-                        uiState = uiState,
+                    fullScreenError != null -> ErrorState(
+                        error = fullScreenError,
                         onRetry = onRetry,
                     )
 
@@ -147,10 +149,9 @@ fun SearchScreen(
 
 @Composable
 private fun ErrorState(
-    uiState: SearchUiState,
+    error: AppError,
     onRetry: () -> Unit,
 ) {
-    val error = uiState.error ?: return
     MessageState(
         icon = error.icon,
         title = error.asTitle(),

@@ -45,9 +45,6 @@ data class Rating(
 @JvmInline
 value class Availability(val state: Int?) {
 
-    val isKnown: Boolean
-        get() = state != null
-
     companion object {
         val UNKNOWN = Availability(null)
     }

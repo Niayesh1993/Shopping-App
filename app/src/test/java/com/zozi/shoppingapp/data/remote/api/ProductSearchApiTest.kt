@@ -29,10 +29,7 @@ class ProductSearchApiTest {
         server = MockWebServer().apply { start() }
         api = Retrofit.Builder()
             .baseUrl(server.url("/mobile-assignment/"))
-            .addConverterFactory(
-                Json { ignoreUnknownKeys = true; coerceInputValues = true; explicitNulls = false }
-                    .asConverterFactory("application/json".toMediaType()),
-            )
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
             .create(ProductSearchApi::class.java)
     }
@@ -108,7 +105,7 @@ class ProductSearchApiTest {
             .products
             .single { it.id == 232406L }
 
-        // Then the payload writes 9 and 24.99, and neither may be truncated
+        // Then
         assertEquals(9.0, adapter.rating!!.average, DELTA)
         assertEquals(24.99, adapter.price.salesIncVat, DELTA)
     }
@@ -144,7 +141,7 @@ class ProductSearchApiTest {
         // When
         val page = api.searchProducts(query = "nothing", page = 1).toDomain()
 
-        // Then a missing field is not a parse failure
+        // Then
         assertTrue(page.products.isEmpty())
         assertEquals(0, page.totalResults)
     }
@@ -157,5 +154,12 @@ class ProductSearchApiTest {
     private companion object {
         const val SAMPLE_RESPONSE = "search_response.json"
         const val DELTA = 0.001
+
+        /** Mirrors the production converter, so the payload is parsed exactly as the app does. */
+        val json = Json {
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+            explicitNulls = false
+        }
     }
 }

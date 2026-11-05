@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import com.zozi.shoppingapp.R
 import com.zozi.shoppingapp.presentation.search.SearchTestTags
 
-
 @Composable
 fun MessageState(
     icon: ImageVector,

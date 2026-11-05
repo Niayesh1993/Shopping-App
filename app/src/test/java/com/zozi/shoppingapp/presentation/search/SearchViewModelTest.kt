@@ -15,6 +15,7 @@ import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.confirmVerified
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -28,6 +29,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SearchViewModelTest {
 
     @get:Rule
@@ -35,33 +37,16 @@ class SearchViewModelTest {
 
     private val repository: ProductRepository = mockk()
 
-    /**
-     * Built lazily so the test dispatcher is already installed when `viewModelScope` is created:
-     * the `init` block starts collecting the debounced query stream as soon as this returns.
-     */
     private val viewModel by lazy { SearchViewModel(SearchProductsUseCase(repository)) }
 
-    /** Shares one scheduler between [runTest] and `viewModelScope`, so time control applies to both. */
     private fun runViewModelTest(body: suspend TestScope.() -> Unit) =
         runTest(mainDispatcherRule.testDispatcher, testBody = body)
 
-    /**
-     * A harmless answer for calls no test planned for. Tests record their own stub on top, which
-     * wins, but this one has to exist: [runTest] drains the scheduler once the body returns, so a
-     * query typed by a test that never expects a search still reaches the repository on the way out.
-     */
     @Before
     fun stubDefaultResponse() {
         respondWith(ProductPage.EMPTY)
     }
 
-    /**
-     * Answers every page with [outcome].
-     *
-     * The [yield] stands in for the suspension a network-backed repository always has. Without it
-     * the call returns within the same dispatch that set `isLoading`, and `StateFlow` conflates the
-     * loading value away before any collector can observe it.
-     */
     private fun respondWith(outcome: Outcome<ProductPage>) {
         coEvery { repository.searchProducts(any(), any()) } coAnswers {
             yield()
@@ -106,7 +91,7 @@ class SearchViewModelTest {
         // When
         viewModel.onQueryChange("app")
 
-        // Then the field echoes the keystroke without waiting for the debounce
+        // Then
         assertEquals("app", viewModel.uiState.value.query)
     }
 
@@ -149,7 +134,7 @@ class SearchViewModelTest {
         viewModel.onQueryChange("apple")
         advanceUntilIdle()
 
-        // Then `confirmVerified` fails the test if "a" or "ap" also reached the repository
+        // Then
         coVerify(exactly = 1) { repository.searchProducts(query = "apple", page = 1) }
         confirmVerified(repository)
     }
@@ -174,7 +159,7 @@ class SearchViewModelTest {
             assertEquals("apple", awaitItem().query)
             advanceTimeBy(QUERY_DEBOUNCE_MILLIS + 1)
 
-            // Then the spinner is a state the UI really passes through, not an inferred one
+            // Then
             assertTrue(awaitItem().isLoading)
 
             val loaded = awaitItem()
@@ -197,7 +182,7 @@ class SearchViewModelTest {
         viewModel.onQueryChange("zzzzz")
         advanceUntilIdle()
 
-        // Then "found nothing" is a different state from "has not searched yet"
+        // Then
         val state = viewModel.uiState.value
         assertTrue(state.isEmptyResult)
         assertFalse(state.isIdle)
@@ -216,21 +201,20 @@ class SearchViewModelTest {
         // Then
         val state = viewModel.uiState.value
         assertEquals(AppError.NoConnection, state.error)
-        assertTrue(state.showsFullScreenError)
+        assertEquals(AppError.NoConnection, state.fullScreenError)
         assertFalse(state.isLoading)
         assertTrue(state.products.isEmpty())
     }
 
     @Test
     fun `given a failed search when retry is tapped then the same query runs again and recovers`() = runViewModelTest {
-        // Given a search that has already failed
+        // Given
         respondWith(AppError.Timeout)
         viewModel.onQueryChange("apple")
         advanceUntilIdle()
         assertEquals(AppError.Timeout, viewModel.uiState.value.error)
 
-        // When the repository starts answering and the user retries.
-        // Re-stubbing the same call replaces the failure: the newest answer wins.
+        // When
         respondWith(productPage(products = listOf(product(id = 7))))
         viewModel.onRetry()
         advanceUntilIdle()
@@ -254,7 +238,7 @@ class SearchViewModelTest {
         viewModel.onQueryChange("")
         advanceUntilIdle()
 
-        // Then clearing shows the prompt again and does not search for nothing
+        // Then
         val state = viewModel.uiState.value
         assertTrue(state.isIdle)
         assertTrue(state.products.isEmpty())
@@ -270,7 +254,7 @@ class SearchViewModelTest {
         viewModel.onQueryChange("   ")
         advanceUntilIdle()
 
-        // Then "nothing to search for" is the idle prompt, not a failure to read
+        // Then
         val state = viewModel.uiState.value
         assertTrue(state.isIdle)
         assertNull(state.error)
@@ -368,12 +352,12 @@ class SearchViewModelTest {
         viewModel.onLoadNextPage()
         advanceUntilIdle()
 
-        // Then a pagination failure must not throw away what the user is already reading
+        // Then
         val state = viewModel.uiState.value
         assertEquals(listOf(1L), state.products.map { it.id })
         assertEquals(AppError.Timeout, state.nextPageError)
         assertNull(state.error)
-        assertFalse(state.showsFullScreenError)
+        assertNull(state.fullScreenError)
     }
 
     @Test
@@ -406,7 +390,7 @@ class SearchViewModelTest {
         viewModel.onLoadNextPage()
         advanceUntilIdle()
 
-        // Then the id shared by both pages is not rendered twice
+        // Then
         assertEquals(listOf(1L, 2L, 3L), viewModel.uiState.value.products.map { it.id })
     }
 

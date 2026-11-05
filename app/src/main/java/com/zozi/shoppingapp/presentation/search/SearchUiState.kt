@@ -20,6 +20,7 @@ data class SearchUiState(
     val isEmptyResult: Boolean
         get() = query.isNotBlank() && products.isEmpty() && !isLoading && error == null
 
-    val showsFullScreenError: Boolean
-        get() = error != null && products.isEmpty()
+    /** An error with no results to fall back on, so the whole screen becomes the error. */
+    val fullScreenError: AppError?
+        get() = error?.takeIf { products.isEmpty() }
 }

@@ -7,7 +7,6 @@ import kotlinx.serialization.Serializable
 data class SearchResponseDto(
     val products: List<ProductDto> = emptyList(),
     val currentPage: Int = 1,
-    val pageSize: Int = 0,
     val totalResults: Int = 0,
     val pageCount: Int = 0,
 )

@@ -5,7 +5,6 @@ import com.zozi.shoppingapp.domain.model.Price
 import com.zozi.shoppingapp.domain.model.Product
 import com.zozi.shoppingapp.domain.model.ProductPage
 import com.zozi.shoppingapp.domain.model.Promotion
-import com.zozi.shoppingapp.domain.model.PromotionType
 import com.zozi.shoppingapp.domain.model.Rating
 
 fun product(
@@ -41,8 +40,3 @@ fun productPage(
     pageCount = pageCount,
     totalResults = totalResults,
 )
-
-fun promotion(
-    text: String = "aanbieding",
-    type: PromotionType = PromotionType.ACTION_PRICE,
-): Promotion = Promotion(text = text, type = type)

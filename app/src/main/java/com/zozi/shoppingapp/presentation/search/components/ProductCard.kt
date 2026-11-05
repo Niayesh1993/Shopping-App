@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -114,10 +115,9 @@ private fun RatingRow(
     modifier: Modifier = Modifier,
 ) {
     val formattedAverage = average.formatAsRating()
+    val description = pluralStringResource(R.plurals.product_rating, count, formattedAverage, count)
     Row(
-        modifier = modifier.clearAndSetSemantics {
-            contentDescription = "$formattedAverage out of 10, based on $count reviews"
-        },
+        modifier = modifier.clearAndSetSemantics { contentDescription = description },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -155,9 +155,10 @@ private fun PriceRow(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
-        if (product.price.hasDiscount) {
+        val listPrice = product.price.listIncVat
+        if (product.price.hasDiscount && listPrice != null) {
             Text(
-                text = product.price.listIncVat.orZero().formatAsPrice(),
+                text = listPrice.formatAsPrice(),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textDecoration = TextDecoration.LineThrough,
@@ -174,10 +175,6 @@ private fun PriceRow(
     }
 }
 
-/**
- * Only `nextDayDelivery` is rendered: the API's `availabilityState` codes have no defined
- * meaning, so claiming "in stock" or "out of stock" from them would be made up.
- */
 @Composable
 private fun DeliveryRow(
     hasNextDayDelivery: Boolean,
