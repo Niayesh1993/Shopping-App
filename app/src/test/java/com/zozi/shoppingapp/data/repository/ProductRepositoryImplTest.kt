@@ -69,6 +69,18 @@ class ProductRepositoryImplTest {
     }
 
     @Test
+    fun `given no query when browsing then the api is called without one`() = runTest {
+        // Given
+        coEvery { api.searchProducts(any(), any()) } returns SearchResponseDto()
+
+        // When
+        repository.searchProducts(query = null, page = 1)
+
+        // Then the repository forwards the absence rather than substituting an empty string
+        coVerify(exactly = 1) { api.searchProducts(query = null, page = 1) }
+    }
+
+    @Test
     fun `given the api throws a transport failure when searching then it becomes a domain error`() = runTest {
         // Given
         coEvery { api.searchProducts(any(), any()) } throws UnknownHostException()

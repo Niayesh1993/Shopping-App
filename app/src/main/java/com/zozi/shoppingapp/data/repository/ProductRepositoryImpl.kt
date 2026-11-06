@@ -15,7 +15,7 @@ class ProductRepositoryImpl @Inject constructor(
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ProductRepository {
 
-    override suspend fun searchProducts(query: String, page: Int): Outcome<ProductPage> =
+    override suspend fun searchProducts(query: String?, page: Int): Outcome<ProductPage> =
         safeApiCall(ioDispatcher) {
             api.searchProducts(query = query, page = page).toDomain()
         }

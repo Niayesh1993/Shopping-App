@@ -38,6 +38,9 @@ com.zozi.shoppingapp
   `collectAsStateWithLifecycle`.
 - **Stateless UI** — `SearchScreen` takes state in and sends callbacks out. `SearchRoute` is the only
   composable that touches the ViewModel.
+- **Browse, then search** — opening the app requests page 1 with no `query` parameter at all, so there
+  are products to scroll straight away and the search field narrows them down. If the endpoint refuses
+  a query-less request, the screen falls back to prompting for a search term and stops retrying.
 - **Debounced search** — keystrokes go into a `MutableStateFlow`, debounced 350 ms and de-duplicated,
   so typing `apple` issues one request.
 - **Pagination** — a `snapshotFlow` over `LazyListState` requests the next page at the end of the
@@ -84,15 +87,16 @@ Every test is named as a sentence and its body is split by `// Given`, `// When`
 
 ```kotlin
 @Test
-fun `given a blank query when searching then it fails without touching the repository`() = runTest {
-    // Given a query that is only whitespace
+fun `given a blank query when searching then the catalogue is browsed with no query at all`() = runTest {
+    // Given
+    respondWith(Outcome.Success(productPage()))
 
-    // When
-    val outcome = searchProducts("   ")
+    // When the user has typed nothing, or only whitespace
+    searchProducts("")
+    searchProducts("   ")
 
-    // Then the network is never asked for something that cannot match
-    assertEquals(Outcome.Failure(AppError.EmptyQuery), outcome)
-    coVerify(exactly = 0) { repository.searchProducts(any(), any()) }
+    // Then the endpoint is asked to browse rather than to match an empty string
+    coVerify(exactly = 2) { repository.searchProducts(query = null, page = 1) }
 }
 ```
 
@@ -104,7 +108,7 @@ rejects method names containing spaces below API 30.
 fake would be more code than the behaviour it stands in for. Instrumented tests swap it into the Hilt
 graph with `@TestInstallIn`.
 
-**62 unit tests** in `app/src/test` and **24 instrumented tests** in `app/src/androidTest`.
+**67 unit tests** in `app/src/test` and **24 instrumented tests** in `app/src/androidTest`.
 
 ## Running
 
@@ -120,6 +124,6 @@ answers 403. The whole test suite runs without either value, because no test use
 
 ```bash
 ./gradlew assembleDebug                # build the app
-./gradlew testDebugUnitTest            # 62 unit tests — no device needed
+./gradlew testDebugUnitTest            # 67 unit tests — no device needed
 ./gradlew connectedDebugAndroidTest    # 24 instrumented tests — needs a device
 ```

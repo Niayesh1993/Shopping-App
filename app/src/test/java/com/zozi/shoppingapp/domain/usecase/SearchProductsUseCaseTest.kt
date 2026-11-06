@@ -23,15 +23,16 @@ class SearchProductsUseCaseTest {
     }
 
     @Test
-    fun `given a blank query when searching then it fails without touching the repository`() = runTest {
-        // Given a query that is only whitespace
+    fun `given a blank query when searching then the catalogue is browsed with no query at all`() = runTest {
+        // Given
+        respondWith(Outcome.Success(productPage()))
 
-        // When
-        val outcome = searchProducts("   ")
+        // When the user has typed nothing, or only whitespace
+        searchProducts("")
+        searchProducts("   ")
 
-        // Then the network is never asked for something that cannot match
-        assertEquals(Outcome.Failure(AppError.EmptyQuery), outcome)
-        coVerify(exactly = 0) { repository.searchProducts(any(), any()) }
+        // Then the endpoint is asked to browse rather than to match an empty string
+        coVerify(exactly = 2) { repository.searchProducts(query = null, page = 1) }
     }
 
     @Test

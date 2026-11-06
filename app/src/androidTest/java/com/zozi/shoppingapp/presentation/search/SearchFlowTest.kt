@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -62,6 +63,11 @@ class SearchFlowTest {
         coEvery { repository.searchProducts(any(), page) } returns outcome
     }
 
+    /** Leaves the launch catalogue stub in place, so clearing the field can still fall back to it. */
+    private fun respondToQuery(query: String, page: ProductPage) {
+        coEvery { repository.searchProducts(query = query, page = any()) } returns Outcome.Success(page)
+    }
+
     private fun typeQuery(query: String) {
         composeRule.onNodeWithTag(SearchTestTags.SEARCH_FIELD).performTextReplacement(query)
     }
@@ -82,12 +88,14 @@ class SearchFlowTest {
     }
 
     @Test
-    fun givenAFreshLaunch_whenNothingIsTyped_thenTheIdlePromptShowsAndNothingIsSearched() {
+    fun givenAFreshLaunch_whenNothingIsTyped_thenTheCatalogueIsAlreadyOnScreen() {
         // Given / When the app has just started
 
-        // Then
-        composeRule.onNodeWithTag(SearchTestTags.IDLE).assertIsDisplayed()
-        coVerify(exactly = 0) { repository.searchProducts(any(), any()) }
+        // Then there is something to scroll before the user has searched for anything
+        awaitProductList()
+        composeRule.onNodeWithText("Sony WH-1000XM5 Zwart").assertIsDisplayed()
+        composeRule.onNodeWithTag(SearchTestTags.IDLE).assertDoesNotExist()
+        coVerify(exactly = 1) { repository.searchProducts(query = null, page = 1) }
     }
 
     @Test
@@ -241,22 +249,23 @@ class SearchFlowTest {
     }
 
     @Test
-    fun givenResultsOnScreen_whenTheQueryIsCleared_thenTheIdlePromptReturns() {
+    fun givenResultsOnScreen_whenTheQueryIsCleared_thenTheCatalogueReturns() {
         // Given
-        respondWith(productPage(products = listOf(product(id = 1))))
+        respondToQuery("apple", productPage(products = listOf(product(id = 1, name = "Apple Watch"))))
 
         typeQuery("apple")
-        awaitProductList()
+        composeRule.waitUntil(TIMEOUT_MILLIS) {
+            composeRule.onAllNodesWithText("Apple Watch").fetchSemanticsNodes().isNotEmpty()
+        }
 
         // When
         composeRule.onNodeWithTag(SearchTestTags.CLEAR_QUERY).performClick()
 
-        // Then
+        // Then the user is handed back the catalogue instead of an empty screen
         composeRule.waitUntil(TIMEOUT_MILLIS) {
-            composeRule.onAllNodesWithTag(SearchTestTags.IDLE)
-                .fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Sony WH-1000XM5 Zwart").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag(SearchTestTags.PRODUCT_LIST).assertDoesNotExist()
+        composeRule.onNodeWithTag(SearchTestTags.IDLE).assertDoesNotExist()
     }
 
     private companion object {

@@ -2,6 +2,7 @@ package com.zozi.shoppingapp.presentation.search
 
 import app.cash.turbine.test
 import com.zozi.shoppingapp.domain.error.AppError
+import com.zozi.shoppingapp.domain.model.Product
 import com.zozi.shoppingapp.domain.model.ProductPage
 import com.zozi.shoppingapp.domain.repository.ProductRepository
 import com.zozi.shoppingapp.domain.result.Outcome
@@ -66,22 +67,92 @@ class SearchViewModelTest {
         }
     }
 
-    private fun assertNoSearches() =
-        coVerify(exactly = 0) { repository.searchProducts(any(), any()) }
+    private fun assertNoSearchFor(query: String) =
+        coVerify(exactly = 0) { repository.searchProducts(query = query, page = any()) }
+
+    /** The catalogue is the query-less request the screen makes before the user types. */
+    private fun assertCatalogueBrowsed(times: Int = 1) =
+        coVerify(exactly = times) { repository.searchProducts(query = null, page = 1) }
+
+    /**
+     * Creating the ViewModel immediately browses the catalogue. Most tests are about what happens
+     * after that, so they let it settle first and then re-stub for the query under test.
+     */
+    private fun TestScope.givenTheCatalogueHasLoaded(
+        products: List<Product> = listOf(product(id = 99)),
+    ) {
+        respondWith(productPage(products = products))
+        viewModel
+        advanceUntilIdle()
+    }
 
     @Test
-    fun `given a new view model when nothing has been typed then the state is idle`() = runViewModelTest {
-        // Given a freshly created ViewModel
+    fun `given a new view model when it is created then the catalogue is browsed with no query`() = runViewModelTest {
+        // Given
+        respondWith(productPage(products = listOf(product(id = 1), product(id = 2))))
 
-        // When
+        // When the ViewModel is created and nothing is typed
+        viewModel
+        advanceUntilIdle()
+
+        // Then there are products to scroll before the user has searched for anything
         val state = viewModel.uiState.value
-
-        // Then
-        assertTrue(state.isIdle)
+        assertEquals(listOf(1L, 2L), state.products.map { it.id })
         assertEquals("", state.query)
-        assertTrue(state.products.isEmpty())
+        assertFalse(state.isIdle)
         assertFalse(state.isLoading)
         assertNull(state.error)
+        assertCatalogueBrowsed()
+    }
+
+    @Test
+    fun `given an endpoint that rejects a query-less request when the app opens then it prompts to search`() = runViewModelTest {
+        // Given an endpoint that only searches and cannot list the catalogue
+        respondWith(AppError.Client(400))
+
+        // When
+        viewModel
+        advanceUntilIdle()
+
+        // Then the user is asked for a search term rather than shown an error they cannot act on
+        val state = viewModel.uiState.value
+        assertTrue(state.isIdle)
+        assertNull(state.error)
+    }
+
+    @Test
+    fun `given the network is down when the app opens then the catalogue failure is a real error`() = runViewModelTest {
+        // Given
+        respondWith(AppError.NoConnection)
+
+        // When
+        viewModel
+        advanceUntilIdle()
+
+        // Then a transport failure must not be mistaken for a missing browse mode
+        val state = viewModel.uiState.value
+        assertEquals(AppError.NoConnection, state.fullScreenError)
+        assertFalse(state.isIdle)
+    }
+
+    @Test
+    fun `given browsing was rejected once when the query is cleared then it is not retried`() = runViewModelTest {
+        // Given a first browse the endpoint refused
+        respondWith(AppError.Client(400))
+        viewModel
+        advanceUntilIdle()
+        assertCatalogueBrowsed(times = 1)
+
+        // When the user searches and then clears the field
+        respondWith(productPage(products = listOf(product(id = 1))))
+        viewModel.onQueryChange("apple")
+        advanceUntilIdle()
+        viewModel.onQueryChange("")
+        advanceUntilIdle()
+
+        // Then the endpoint is not asked again for something it already refused
+        assertCatalogueBrowsed(times = 1)
+        assertTrue(viewModel.uiState.value.isIdle)
     }
 
     @Test
@@ -98,18 +169,20 @@ class SearchViewModelTest {
     @Test
     fun `given a typed query when the debounce window has not elapsed then no search happens`() = runViewModelTest {
         // Given
+        givenTheCatalogueHasLoaded()
         viewModel.onQueryChange("apple")
 
         // When
         advanceTimeBy(QUERY_DEBOUNCE_MILLIS - 1)
 
         // Then
-        assertNoSearches()
+        assertNoSearchFor("apple")
     }
 
     @Test
     fun `given a typed query when the debounce window elapses then the query is searched once`() = runViewModelTest {
         // Given
+        givenTheCatalogueHasLoaded()
         respondWith(productPage(products = listOf(product(id = 1))))
 
         // When
@@ -118,12 +191,14 @@ class SearchViewModelTest {
 
         // Then
         coVerify(exactly = 1) { repository.searchProducts(query = "apple", page = 1) }
+        assertCatalogueBrowsed()
         confirmVerified(repository)
     }
 
     @Test
     fun `given rapid keystrokes when the debounce elapses then only the last query is searched`() = runViewModelTest {
         // Given
+        givenTheCatalogueHasLoaded()
         respondWith(productPage())
 
         // When
@@ -136,12 +211,14 @@ class SearchViewModelTest {
 
         // Then
         coVerify(exactly = 1) { repository.searchProducts(query = "apple", page = 1) }
+        assertCatalogueBrowsed()
         confirmVerified(repository)
     }
 
     @Test
     fun `given a search in flight when it completes then loading is published before the content`() = runViewModelTest {
-        // Given
+        // Given the catalogue has already settled, so the only state left to observe is the search
+        givenTheCatalogueHasLoaded()
         respondWith(
             productPage(
                 products = listOf(product(id = 1), product(id = 2)),
@@ -152,7 +229,7 @@ class SearchViewModelTest {
         )
 
         viewModel.uiState.test {
-            assertTrue(awaitItem().isIdle)
+            assertEquals("", awaitItem().query)
 
             // When
             viewModel.onQueryChange("apple")
@@ -227,38 +304,39 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `given results on screen when the query is cleared then the state returns to idle`() = runViewModelTest {
+    fun `given results on screen when the query is cleared then the catalogue comes back`() = runViewModelTest {
         // Given
+        givenTheCatalogueHasLoaded()
         respondWith(productPage(products = listOf(product(id = 1))))
         viewModel.onQueryChange("apple")
         advanceUntilIdle()
-        assertFalse(viewModel.uiState.value.isIdle)
+        assertEquals(listOf(1L), viewModel.uiState.value.products.map { it.id })
 
         // When
+        respondWith(productPage(products = listOf(product(id = 99))))
         viewModel.onQueryChange("")
         advanceUntilIdle()
 
-        // Then
+        // Then the user is left browsing again rather than staring at an empty screen
         val state = viewModel.uiState.value
-        assertTrue(state.isIdle)
-        assertTrue(state.products.isEmpty())
-        coVerify(exactly = 1) { repository.searchProducts(query = "apple", page = 1) }
-        confirmVerified(repository)
+        assertFalse(state.isIdle)
+        assertEquals(listOf(99L), state.products.map { it.id })
+        assertCatalogueBrowsed(times = 2)
     }
 
     @Test
-    fun `given a whitespace only query when the debounce elapses then it stays idle without an error`() = runViewModelTest {
-        // Given a freshly created ViewModel
+    fun `given a whitespace only query when the debounce elapses then the catalogue is browsed`() = runViewModelTest {
+        // Given
+        givenTheCatalogueHasLoaded()
 
         // When
         viewModel.onQueryChange("   ")
         advanceUntilIdle()
 
-        // Then
-        val state = viewModel.uiState.value
-        assertTrue(state.isIdle)
-        assertNull(state.error)
-        assertNoSearches()
+        // Then whitespace is treated as "no query", not as a search for spaces
+        assertNull(viewModel.uiState.value.error)
+        assertNoSearchFor("   ")
+        assertCatalogueBrowsed(times = 2)
     }
 
     @Test

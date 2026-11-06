@@ -54,6 +54,20 @@ class ProductSearchApiTest {
     }
 
     @Test
+    fun `given no query when calling the endpoint then the parameter is left out of the url`() = runTest {
+        // Given
+        server.enqueue(jsonResponse(readTestResource(SAMPLE_RESPONSE)))
+
+        // When the screen asks to browse rather than to search
+        api.searchProducts(query = null, page = 1)
+
+        // Then an absent parameter is sent, not an empty one, so the endpoint sees no filter at all
+        val url = server.takeRequest().requestUrl!!
+        assertEquals("/mobile-assignment/search?page=1", url.encodedPath + "?" + url.encodedQuery)
+        assertEquals(setOf("page"), url.queryParameterNames)
+    }
+
+    @Test
     fun `given a search when calling the endpoint then no parameters beyond query and page are sent`() = runTest {
         // Given
         server.enqueue(jsonResponse(readTestResource(SAMPLE_RESPONSE)))

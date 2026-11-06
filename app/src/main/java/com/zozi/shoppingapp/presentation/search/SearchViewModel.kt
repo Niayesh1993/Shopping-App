@@ -35,6 +35,12 @@ class SearchViewModel @Inject constructor(
     private var searchJob: Job? = null
     private var nextPageJob: Job? = null
 
+    /**
+     * Set to false if the endpoint refuses a query-less request, which means it only searches and
+     * cannot browse. The screen then falls back to prompting for a search term.
+     */
+    private var canBrowseCatalogue = true
+
     @OptIn(FlowPreview::class)
     private val debouncedQueries = queryInput
         .filterNotNull()
@@ -45,6 +51,9 @@ class SearchViewModel @Inject constructor(
         debouncedQueries
             .onEach(::search)
             .launchIn(viewModelScope)
+
+        // Opening the app is itself a request for the catalogue, so there is nothing to debounce.
+        search(query = "")
     }
 
     fun onQueryChange(query: String) {
@@ -92,6 +101,11 @@ class SearchViewModel @Inject constructor(
         searchJob?.cancel()
         nextPageJob?.cancel()
 
+        if (query.isBlank() && !canBrowseCatalogue) {
+            _uiState.value = SearchUiState(query = query)
+            return
+        }
+
         searchJob = viewModelScope.launch {
             _uiState.update {
                 it.copy(isLoading = true, error = null, nextPageError = null)
@@ -110,7 +124,10 @@ class SearchViewModel @Inject constructor(
                     }
                 },
                 onFailure = { error ->
-                    if (error == AppError.EmptyQuery) {
+                    // The endpoint rejected the request itself rather than failing to answer, so
+                    // browsing is unsupported. Prompt for a search term instead of blaming the user.
+                    if (query.isBlank() && error.rejectsBrowsing) {
+                        canBrowseCatalogue = false
                         _uiState.value = SearchUiState(query = query)
                         return@fold
                     }
@@ -133,3 +150,11 @@ class SearchViewModel @Inject constructor(
         const val QUERY_DEBOUNCE_MILLIS = 350L
     }
 }
+
+/**
+ * Whether the endpoint turned the request down as malformed, as opposed to being unable to answer
+ * it. Only these mean "this endpoint cannot browse"; [AppError.Unauthorized] is excluded on purpose,
+ * because a missing API key must keep surfacing as an error rather than an empty search prompt.
+ */
+private val AppError.rejectsBrowsing: Boolean
+    get() = this is AppError.Client || this == AppError.NotFound

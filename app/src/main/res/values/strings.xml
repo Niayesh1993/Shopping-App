@@ -33,8 +33,6 @@
     <string name="error_client">We could not complete that request (%d).</string>
     <string name="error_serialization_title">Unexpected response</string>
     <string name="error_serialization">The catalogue sent something this app could not read.</string>
-    <string name="error_empty_query_title">Enter a search term</string>
-    <string name="error_empty_query">Type a product name to start searching.</string>
     <string name="error_unknown_title">Something went wrong</string>
     <string name="error_unknown">An unexpected problem occurred. Please try again.</string>
 

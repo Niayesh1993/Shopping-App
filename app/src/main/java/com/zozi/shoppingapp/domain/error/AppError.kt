@@ -15,7 +15,5 @@ sealed interface AppError {
 
     data object Serialization : AppError
 
-    data object EmptyQuery : AppError
-
     data class Unknown(val message: String? = null) : AppError
 }
