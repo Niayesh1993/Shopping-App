@@ -39,8 +39,11 @@ com.zozi.shoppingapp
 - **Stateless UI** — `SearchScreen` takes state in and sends callbacks out. `SearchRoute` is the only
   composable that touches the ViewModel.
 - **Browse, then search** — opening the app requests page 1 with no `query` parameter at all, so there
-  are products to scroll straight away and the search field narrows them down. If the endpoint refuses
-  a query-less request, the screen falls back to prompting for a search term and stops retrying.
+  are products to scroll straight away and the search field narrows them down. Because that request is
+  the screen's own idea rather than the user's, a failure never opens the app on an error: it falls
+  back to prompting for a search term, and the next real search reports the problem properly. Only an
+  outright rejection (4xx) is remembered as "this endpoint cannot browse"; a timeout or a dropped
+  connection is retried the next time the field is cleared.
 - **Debounced search** — keystrokes go into a `MutableStateFlow`, debounced 350 ms and de-duplicated,
   so typing `apple` issues one request.
 - **Pagination** — a `snapshotFlow` over `LazyListState` requests the next page at the end of the
@@ -108,7 +111,7 @@ rejects method names containing spaces below API 30.
 fake would be more code than the behaviour it stands in for. Instrumented tests swap it into the Hilt
 graph with `@TestInstallIn`.
 
-**67 unit tests** in `app/src/test` and **24 instrumented tests** in `app/src/androidTest`.
+**69 unit tests** in `app/src/test` and **24 instrumented tests** in `app/src/androidTest`.
 
 ## Running
 
@@ -120,10 +123,11 @@ SEARCH_API_KEY=your-key
 ```
 
 `SEARCH_BASE_URL` falls back to the assignment endpoint; without `SEARCH_API_KEY` the live API
-answers 403. The whole test suite runs without either value, because no test uses the real network.
+answers 403, so the app opens on the "search for something" prompt and reports the error as soon as
+you type. The whole test suite runs without either value, because no test uses the real network.
 
 ```bash
 ./gradlew assembleDebug                # build the app
-./gradlew testDebugUnitTest            # 67 unit tests — no device needed
+./gradlew testDebugUnitTest            # 69 unit tests — no device needed
 ./gradlew connectedDebugAndroidTest    # 24 instrumented tests — needs a device
 ```

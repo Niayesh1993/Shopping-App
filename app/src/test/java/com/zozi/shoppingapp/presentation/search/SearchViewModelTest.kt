@@ -121,7 +121,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `given the network is down when the app opens then the catalogue failure is a real error`() = runViewModelTest {
+    fun `given the network is down when the app opens then it prompts to search instead of erroring`() = runViewModelTest {
         // Given
         respondWith(AppError.NoConnection)
 
@@ -129,10 +129,42 @@ class SearchViewModelTest {
         viewModel
         advanceUntilIdle()
 
-        // Then a transport failure must not be mistaken for a missing browse mode
+        // Then the app never opens on an error for a request the user did not make
         val state = viewModel.uiState.value
-        assertEquals(AppError.NoConnection, state.fullScreenError)
-        assertFalse(state.isIdle)
+        assertTrue(state.isIdle)
+        assertNull(state.error)
+    }
+
+    @Test
+    fun `given a transient failure when the query is cleared then browsing is tried again`() = runViewModelTest {
+        // Given a first browse that failed for a reason that may not last
+        respondWith(AppError.NoConnection)
+        viewModel
+        advanceUntilIdle()
+
+        // When the user searches and then clears the field
+        respondWith(productPage(products = listOf(product(id = 1))))
+        viewModel.onQueryChange("apple")
+        advanceUntilIdle()
+        viewModel.onQueryChange("")
+        advanceUntilIdle()
+
+        // Then the catalogue is attempted again, unlike an outright rejection
+        assertCatalogueBrowsed(times = 2)
+        assertEquals(listOf(1L), viewModel.uiState.value.products.map { it.id })
+    }
+
+    @Test
+    fun `given a query typed while the catalogue is loading when the catalogue fails then the query survives`() = runViewModelTest {
+        // Given a browse that is still in flight
+        respondWith(AppError.Timeout)
+
+        // When the user types before it comes back
+        viewModel.onQueryChange("apple")
+        advanceUntilIdle()
+
+        // Then the late failure must not wipe what they typed, or retry would lose the query
+        assertEquals("apple", viewModel.uiState.value.query)
     }
 
     @Test

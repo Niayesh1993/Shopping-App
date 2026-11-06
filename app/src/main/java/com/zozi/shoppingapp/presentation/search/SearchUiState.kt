@@ -14,6 +14,10 @@ data class SearchUiState(
     val currentPage: Int = 0,
     val hasNextPage: Boolean = false,
 ) {
+    /**
+     * Nothing to show and nothing to blame: the catalogue could not be browsed, so the screen asks
+     * for a search term instead. Normally the app opens on the catalogue and never reaches this.
+     */
     val isIdle: Boolean
         get() = query.isBlank() && products.isEmpty() && !isLoading && error == null
 

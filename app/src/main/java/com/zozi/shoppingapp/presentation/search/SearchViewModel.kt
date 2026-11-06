@@ -36,8 +36,8 @@ class SearchViewModel @Inject constructor(
     private var nextPageJob: Job? = null
 
     /**
-     * Set to false if the endpoint refuses a query-less request, which means it only searches and
-     * cannot browse. The screen then falls back to prompting for a search term.
+     * Set to false once the endpoint has refused a query-less request outright, which means it only
+     * searches and cannot browse, so there is nothing to gain by asking again.
      */
     private var canBrowseCatalogue = true
 
@@ -102,7 +102,7 @@ class SearchViewModel @Inject constructor(
         nextPageJob?.cancel()
 
         if (query.isBlank() && !canBrowseCatalogue) {
-            _uiState.value = SearchUiState(query = query)
+            promptForSearchTerm(query)
             return
         }
 
@@ -124,11 +124,12 @@ class SearchViewModel @Inject constructor(
                     }
                 },
                 onFailure = { error ->
-                    // The endpoint rejected the request itself rather than failing to answer, so
-                    // browsing is unsupported. Prompt for a search term instead of blaming the user.
-                    if (query.isBlank() && error.rejectsBrowsing) {
-                        canBrowseCatalogue = false
-                        _uiState.value = SearchUiState(query = query)
+                    // A query-less request is the screen's own idea, not the user's, so failing it
+                    // must never open the app on an error they did not ask for. Fall back to
+                    // prompting for a term; a real search will surface the error properly.
+                    if (query.isBlank()) {
+                        canBrowseCatalogue = !error.rejectsBrowsing
+                        promptForSearchTerm(query)
                         return@fold
                     }
                     _uiState.update {
@@ -146,15 +147,26 @@ class SearchViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Clears the screen back to the "type a search term" prompt — but never over the top of a query
+     * the user has typed in the meantime, since the catalogue request they did not ask for can
+     * finish long after they started typing.
+     */
+    private fun promptForSearchTerm(query: String) {
+        if (_uiState.value.query.isBlank()) {
+            _uiState.value = SearchUiState(query = query)
+        }
+    }
+
     companion object {
         const val QUERY_DEBOUNCE_MILLIS = 350L
     }
 }
 
 /**
- * Whether the endpoint turned the request down as malformed, as opposed to being unable to answer
- * it. Only these mean "this endpoint cannot browse"; [AppError.Unauthorized] is excluded on purpose,
- * because a missing API key must keep surfacing as an error rather than an empty search prompt.
+ * Whether the endpoint turned the request down as malformed, which means it cannot browse at all and
+ * there is no point asking again. Everything else — no connection, a timeout, a missing API key —
+ * may well succeed later, so those failures are not remembered.
  */
 private val AppError.rejectsBrowsing: Boolean
     get() = this is AppError.Client || this == AppError.NotFound
