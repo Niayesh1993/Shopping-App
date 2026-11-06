@@ -1,0 +1,22 @@
+<!--
+  Stands in for a product photo while it loads, when it fails, and when the catalogue has no image
+  for the product at all. The glyph is drawn at half size inside a 96dp box so it reads as a muted
+  placeholder rather than as content; the surrounding tile colour comes from the theme at the call
+  site, so a neutral grey is used here to sit correctly on both light and dark surfaces.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group
+        android:scaleX="0.5"
+        android:scaleY="0.5"
+        android:translateX="6"
+        android:translateY="6">
+        <path
+            android:fillAlpha="0.55"
+            android:fillColor="#9E9E9E"
+            android:pathData="M21,19V5c0,-1.1 -0.9,-2 -2,-2H5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2zM8.5,13.5l2.5,3.01L14.5,12l4.5,6H5l3.5,-4.5z" />
+    </group>
+</vector>

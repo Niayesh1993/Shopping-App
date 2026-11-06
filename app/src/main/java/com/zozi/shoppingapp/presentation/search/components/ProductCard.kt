@@ -1,5 +1,6 @@
 package com.zozi.shoppingapp.presentation.search.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -42,16 +44,20 @@ fun ProductCard(
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(12.dp)) {
+            val placeholder = painterResource(R.drawable.ic_product_placeholder)
             AsyncImage(
                 model = product.imageUrl,
-                contentDescription = stringResource(
-                    R.string.product_image_description,
-                    product.name,
-                ),
+                contentDescription = product.imageUrl?.let {
+                    stringResource(R.string.product_image_description, product.name)
+                },
                 contentScale = ContentScale.Fit,
+                placeholder = placeholder,
+                error = placeholder,
+                fallback = placeholder,
                 modifier = Modifier
                     .size(96.dp)
-                    .clip(RoundedCornerShape(8.dp)),
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
             )
 
             Spacer(modifier = Modifier.width(12.dp))
